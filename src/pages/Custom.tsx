@@ -283,7 +283,10 @@ export default function Custom() {
               ["Boardroom Tables", "Long-format tables with cable routes and flush power modules."],
               ["Fitted Storage Walls", "Floor-to-ceiling shelving and cabinets built to a plan."],
               ["Bench Runs", "Open-plan workstation runs cut to the floor plate and column spacing."],
-              ["Unusual Pieces", "Printer units, presentation units, filing rooms and reception desks."],
+              ["Reception & Waiting Units", "Waiting-area seating, coffee tables and display units built around the entrance."],
+              ["Training Room Furniture", "Training desks, collaborative tables and storage configured for flexible rooms."],
+              ["Media & Presentation Units", "Presentation consoles, printer stations and AV furniture designed around equipment."],
+              ["Unusual Pieces", "Special-purpose furniture made from drawings, dimensions and site requirements."],
             ].map(([title, text], i) => (
               <Reveal key={title} delay={(i % 3) * 0.05} variant="scale">
                 <article className="h-full bg-white p-7">
