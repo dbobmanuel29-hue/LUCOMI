@@ -5,9 +5,10 @@ import { Button, Field, Input, Modal, Notice } from "./ui";
 type AuthMode = "signin" | "signup";
 export type AuthUser = { name: string; email: string; photoURL?: string; provider: "email" | "google" };
 
-const AuthContext = createContext<{ open: () => void; user: AuthUser | null; signOut: () => void }>({
+const AuthContext = createContext<{ open: () => void; user: AuthUser | null; updateUser: (changes: Partial<AuthUser>) => void; signOut: () => void }>({
   open: () => {},
   user: null,
+  updateUser: () => {},
   signOut: () => {},
 });
 export const useAuth = () => useContext(AuthContext);
@@ -43,13 +44,22 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
     }
   };
 
+  const updateUser = (changes: Partial<AuthUser>) => {
+    setUser((current) => {
+      if (!current) return current;
+      const next = { ...current, ...changes };
+      try { localStorage.setItem("lucomi-auth-user", JSON.stringify(next)); } catch { /* storage unavailable */ }
+      return next;
+    });
+  };
+
   const signOut = () => {
     setUser(null);
     try { localStorage.removeItem("lucomi-auth-user"); } catch { /* storage unavailable */ }
   };
 
   return (
-    <AuthContext.Provider value={{ open: () => setOpen(true), user, signOut }}>
+    <AuthContext.Provider value={{ open: () => setOpen(true), user, updateUser, signOut }}>
       {children}
       <AuthModal open={open} onClose={() => setOpen(false)} onAuthenticated={handleAuthenticated} />
     </AuthContext.Provider>
