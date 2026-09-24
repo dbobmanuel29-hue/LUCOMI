@@ -8,6 +8,7 @@ import { cn, displayPhone, telHref, waLink } from "../lib/helpers";
 import { Logo, LogoLockup, Mark } from "./Logo";
 import { FacebookIcon, InstagramIcon, TikTokIcon, WhatsAppIcon, XIcon } from "./BrandIcons";
 import { SiteSearch } from "./SiteSearch";
+import { useAuth } from "./AuthFlow";
 import { useQuote } from "./QuoteFlow";
 import { Button, Micro } from "./ui";
 
@@ -113,6 +114,7 @@ export function SiteHeader() {
   const [moreOpen, setMoreOpen] = useState(false);
   const [searchOpen, setSearchOpen] = useState(false);
   const { open } = useQuote();
+  const { open: openAuth } = useAuth();
   const location = useLocation();
   const moreRef = useRef<HTMLDivElement>(null);
   const closeSearch = useCallback(() => setSearchOpen(false), []);
@@ -164,8 +166,7 @@ export function SiteHeader() {
     <>
       <header
         className={cn(
-          "fixed inset-x-0 top-0 z-[70] transition-all duration-300",
-          scrolled ? "bg-paper/95 backdrop-blur-md shadow-[0_1px_0_rgba(10,42,94,0.08),0_10px_30px_-24px_rgba(10,42,94,0.5)]" : "bg-transparent",
+          "fixed inset-x-0 top-0 z-[70] border-b border-line/80 bg-paper shadow-[0_1px_0_rgba(10,42,94,0.06),0_10px_30px_-24px_rgba(10,42,94,0.22)]",
         )}
       >
         <div className="shell flex h-[68px] items-center justify-between gap-3 sm:h-[72px] sm:gap-4 xl:h-[76px] xl:gap-6">
@@ -235,7 +236,7 @@ export function SiteHeader() {
             </div>
           </nav>
           <div className="flex items-center gap-3">
-            <Button onClick={() => open("", "Quote Request")} className="hidden xl:inline-flex" size="sm">
+            <Button onClick={openAuth} className="hidden xl:inline-flex" size="sm">
               Get Started
             </Button>
             <button
@@ -338,7 +339,7 @@ export function SiteHeader() {
                 variant="light"
                 onClick={() => {
                   setMenuOpen(false);
-                  open("", "Quote Request");
+                  openAuth();
                 }}
               >
                 Get Started
