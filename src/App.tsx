@@ -1,4 +1,4 @@
-import { lazy, Suspense, useEffect, useState } from "react";
+import { useEffect, useState } from "react";
 import { AnimatePresence, motion } from "framer-motion";
 import { BrowserRouter, Outlet, Route, Routes, useLocation } from "react-router-dom";
 import { FloatingWhatsApp, MobileCTABar, SiteFooter, SiteHeader } from "./components/Chrome";
@@ -6,36 +6,26 @@ import { QuoteProvider } from "./components/QuoteFlow";
 import { AuthProvider } from "./components/AuthFlow";
 import { Button, Micro } from "./components/ui";
 import Home from "./pages/Home";
+import About from "./pages/About";
+import Products from "./pages/Products";
+import ProductDetail from "./pages/ProductDetail";
+import Custom from "./pages/Custom";
+import Projects from "./pages/Projects";
+import Contact from "./pages/Contact";
+import Team from "./pages/Team";
+import Reviews from "./pages/Reviews";
+import Account from "./pages/Account";
+import { Privacy, Terms } from "./pages/Legal";
+import { AdminLayout, AdminLogin, Dashboard } from "./admin/AdminShell";
+import { AdminCategories, AdminProducts } from "./admin/AdminCatalog";
+import { AdminEnquiries, AdminProjects, AdminSettings, AdminTeam, AdminTestimonials } from "./admin/AdminContent";
 
-const About = lazy(() => import("./pages/About"));
-const Products = lazy(() => import("./pages/Products"));
-const ProductDetail = lazy(() => import("./pages/ProductDetail"));
-const Custom = lazy(() => import("./pages/Custom"));
-const Projects = lazy(() => import("./pages/Projects"));
-const Contact = lazy(() => import("./pages/Contact"));
-const Team = lazy(() => import("./pages/Team"));
-const Reviews = lazy(() => import("./pages/Reviews"));
-const Account = lazy(() => import("./pages/Account"));
-const Terms = lazy(() => import("./pages/Legal").then((m) => ({ default: m.Terms })));
-const Privacy = lazy(() => import("./pages/Legal").then((m) => ({ default: m.Privacy })));
-
-const AdminLogin = lazy(() => import("./admin/AdminShell").then((m) => ({ default: m.AdminLogin })));
-const AdminLayout = lazy(() => import("./admin/AdminShell").then((m) => ({ default: m.AdminLayout })));
-const Dashboard = lazy(() => import("./admin/AdminShell").then((m) => ({ default: m.Dashboard })));
-const AdminProducts = lazy(() => import("./admin/AdminCatalog").then((m) => ({ default: m.AdminProducts })));
-const AdminCategories = lazy(() => import("./admin/AdminCatalog").then((m) => ({ default: m.AdminCategories })));
-const AdminProjects = lazy(() => import("./admin/AdminContent").then((m) => ({ default: m.AdminProjects })));
-const AdminTeam = lazy(() => import("./admin/AdminContent").then((m) => ({ default: m.AdminTeam })));
-const AdminTestimonials = lazy(() => import("./admin/AdminContent").then((m) => ({ default: m.AdminTestimonials })));
-const AdminEnquiries = lazy(() => import("./admin/AdminContent").then((m) => ({ default: m.AdminEnquiries })));
-const AdminSettings = lazy(() => import("./admin/AdminContent").then((m) => ({ default: m.AdminSettings })));
-
-function RouteFallback() {
-  return (
-    <div className="shell flex min-h-[42vh] items-center justify-center py-24" role="status" aria-label="Loading page">
-      <div className="h-8 w-8 animate-spin rounded-full border-2 border-royal/20 border-t-royal" />
-    </div>
-  );
+function ScrollToTop() {
+  const { pathname } = useLocation();
+  useEffect(() => {
+    window.scrollTo({ top: 0, left: 0, behavior: "auto" });
+  }, [pathname]);
+  return null;
 }
 
 function PublicLayout() {
@@ -53,7 +43,7 @@ function PublicLayout() {
             exit={{ opacity: 0 }}
             transition={{ duration: 0.18, ease: "easeOut" }}
           >
-            <Suspense fallback={<RouteFallback />}><Outlet /></Suspense>
+            <Outlet />
           </motion.div>
         </AnimatePresence>
       </main>
@@ -89,11 +79,20 @@ export default function App() {
   const [ready, setReady] = useState(false);
 
   useEffect(() => {
-    const frame = window.requestAnimationFrame(() => {
+    const finish = () => {
       setReady(true);
-      window.requestAnimationFrame(() => document.getElementById("initial-loader")?.remove());
-    });
-    return () => window.cancelAnimationFrame(frame);
+      requestAnimationFrame(() => document.getElementById("initial-loader")?.remove());
+    };
+    if (document.readyState === "complete") {
+      finish();
+      return;
+    }
+    window.addEventListener("load", finish, { once: true });
+    const fallback = window.setTimeout(finish, 1800);
+    return () => {
+      window.removeEventListener("load", finish);
+      window.clearTimeout(fallback);
+    };
   }, []);
 
   if (!ready) return null;
@@ -120,16 +119,16 @@ export default function App() {
             <Route path="*" element={<NotFound />} />
           </Route>
 
-          <Route path="/admin/login" element={<Suspense fallback={<RouteFallback />}><AdminLogin /></Suspense>} />
-          <Route path="/admin" element={<Suspense fallback={<RouteFallback />}><AdminLayout /></Suspense>}>
-            <Route index element={<Suspense fallback={<RouteFallback />}><Dashboard /></Suspense>} />
-            <Route path="products" element={<Suspense fallback={<RouteFallback />}><AdminProducts /></Suspense>} />
-            <Route path="categories" element={<Suspense fallback={<RouteFallback />}><AdminCategories /></Suspense>} />
-            <Route path="projects" element={<Suspense fallback={<RouteFallback />}><AdminProjects /></Suspense>} />
-            <Route path="team" element={<Suspense fallback={<RouteFallback />}><AdminTeam /></Suspense>} />
-            <Route path="testimonials" element={<Suspense fallback={<RouteFallback />}><AdminTestimonials /></Suspense>} />
-            <Route path="enquiries" element={<Suspense fallback={<RouteFallback />}><AdminEnquiries /></Suspense>} />
-            <Route path="settings" element={<Suspense fallback={<RouteFallback />}><AdminSettings /></Suspense>} />
+          <Route path="/admin/login" element={<AdminLogin />} />
+          <Route path="/admin" element={<AdminLayout />}>
+            <Route index element={<Dashboard />} />
+            <Route path="products" element={<AdminProducts />} />
+            <Route path="categories" element={<AdminCategories />} />
+            <Route path="projects" element={<AdminProjects />} />
+            <Route path="team" element={<AdminTeam />} />
+            <Route path="testimonials" element={<AdminTestimonials />} />
+            <Route path="enquiries" element={<AdminEnquiries />} />
+            <Route path="settings" element={<AdminSettings />} />
           </Route>
         </Routes>
         </QuoteProvider>
