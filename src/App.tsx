@@ -1,5 +1,5 @@
 import { useEffect } from "react";
-import { HashRouter, Outlet, Route, Routes, useLocation } from "react-router-dom";
+import { BrowserRouter, Outlet, Route, Routes, useLocation } from "react-router-dom";
 import { FloatingWhatsApp, MobileCTABar, SiteFooter, SiteHeader } from "./components/Chrome";
 import { QuoteProvider } from "./components/QuoteFlow";
 import { Button, Micro } from "./components/ui";
@@ -62,7 +62,7 @@ function NotFound() {
 
 export default function App() {
   return (
-    <HashRouter>
+    <BrowserRouter>
       <QuoteProvider>
         <ScrollToTop />
         <Routes>
@@ -94,6 +94,6 @@ export default function App() {
           </Route>
         </Routes>
       </QuoteProvider>
-    </HashRouter>
+    </BrowserRouter>
   );
 }
