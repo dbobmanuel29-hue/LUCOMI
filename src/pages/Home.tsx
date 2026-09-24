@@ -107,8 +107,10 @@ function Hero() {
               fetchPriority="high"
             />
             <div className="absolute inset-x-0 bottom-0 h-28 bg-gradient-to-t from-ink/55 to-transparent" />
-            <div className="absolute inset-x-0 bottom-0 p-5">
-              <span className="micro text-white/85">Designed & Manufactured in Nigeria</span>
+            <div className="absolute inset-x-0 bottom-0 z-[2] flex justify-end p-5 sm:p-6">
+              <span className="micro max-w-[78%] text-right text-white drop-shadow-[0_2px_8px_rgba(0,0,0,0.7)] sm:max-w-[70%]">
+                Designed & Manufactured in Nigeria
+              </span>
             </div>
           </div>
 
