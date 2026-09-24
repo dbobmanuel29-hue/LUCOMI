@@ -120,8 +120,6 @@ export default function App() {
             <Route path="*" element={<NotFound />} />
           </Route>
 
-          <Route path="/terms" element={<Terms />} />
-          <Route path="/privacy" element={<Privacy />} />
           <Route path="/admin/login" element={<Suspense fallback={<RouteFallback />}><AdminLogin /></Suspense>} />
           <Route path="/admin" element={<Suspense fallback={<RouteFallback />}><AdminLayout /></Suspense>}>
             <Route index element={<Suspense fallback={<RouteFallback />}><Dashboard /></Suspense>} />
