@@ -532,7 +532,7 @@ export const businessSettings: BusinessSettings = {
   phone: ["234-80-23773065", "234-80-72251045"],
   email: "oninilucky@yahoo.com",
   address: "#17 Ikezam Street, Ozuoba, Port Harcourt, Rivers State, Nigeria.",
-  whatsapp: "",
+  whatsapp: "234-80-23773065",
   businessHours: "",
   social: {
     facebook: "https://www.facebook.com/lucomienterprise",
