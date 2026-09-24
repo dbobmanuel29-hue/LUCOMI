@@ -1,0 +1,280 @@
+@import "tailwindcss";
+
+@custom-variant dark (&:where(.dark, .dark *));
+
+@theme {
+  --color-paper: #f1f3f6;
+  --color-paper-deep: #e6e8ed;
+  --color-plate: #e6e8ed;
+  --color-ink: #0a2a5e;
+  --color-ink-deep: #061c40;
+  --color-royal: #1560e8;
+  --color-royal-dark: #0f4cbb;
+  --color-charcoal: #151a21;
+  --color-mute: #5c6675;
+  --color-line: #d3d8e0;
+  --color-card: #ffffff;
+
+  --font-display: "Instrument Serif", "Times New Roman", serif;
+  --font-sans: "Archivo", "Helvetica Neue", Arial, sans-serif;
+}
+
+/* ------------------------------------------------------------------ */
+/* Dark mode: only the surfaces and body text flip. Brand ink, royal   */
+/* and pure white stay fixed so panels, buttons and photography keep   */
+/* their contrast.                                                     */
+/* ------------------------------------------------------------------ */
+.dark {
+  --color-paper: #090e18;
+  --color-paper-deep: #0c1322;
+  --color-plate: #141f36;
+  --color-line: #24304b;
+  --color-charcoal: #eaeffa;
+  --color-mute: #a3b1cc;
+  --color-card: #0f1830;
+  color-scheme: dark;
+}
+
+@layer base {
+  html {
+    -webkit-text-size-adjust: 100%;
+    scroll-behavior: smooth;
+  }
+  body {
+    background-color: var(--color-paper);
+    color: var(--color-charcoal);
+    font-family: var(--font-sans);
+    font-size: 16px;
+    line-height: 1.6;
+    overflow-x: hidden;
+    transition: background-color 0.3s ease, color 0.3s ease;
+  }
+  h1,
+  h2,
+  h3 {
+    font-family: var(--font-display);
+    font-weight: 400;
+    letter-spacing: -0.015em;
+    line-height: 0.95;
+    color: var(--color-ink);
+  }
+  ::selection {
+    background: var(--color-ink);
+    color: #fff;
+  }
+  :focus-visible {
+    outline: 2px solid var(--color-royal);
+    outline-offset: 3px;
+    border-radius: 2px;
+  }
+  input,
+  select,
+  textarea,
+  button {
+    font-family: inherit;
+  }
+
+  /* themed scrollbar — visible but quiet */
+  * {
+    scrollbar-width: thin;
+    scrollbar-color: var(--color-royal) var(--color-paper-deep);
+  }
+  ::-webkit-scrollbar {
+    width: 11px;
+    height: 11px;
+  }
+  ::-webkit-scrollbar-track {
+    background: var(--color-paper-deep);
+  }
+  ::-webkit-scrollbar-thumb {
+    background: linear-gradient(180deg, var(--color-royal), var(--color-ink));
+    border: 3px solid var(--color-paper-deep);
+    border-radius: 999px;
+  }
+  ::-webkit-scrollbar-thumb:hover {
+    background: var(--color-royal-dark);
+  }
+}
+
+@layer components {
+  .shell {
+    width: 100%;
+    max-width: 1360px;
+    margin-inline: auto;
+    padding-inline: 16px;
+  }
+  @media (min-width: 640px) {
+    .shell {
+      padding-inline: 24px;
+    }
+  }
+  @media (min-width: 1024px) {
+    .shell {
+      padding-inline: 40px;
+    }
+  }
+  .micro {
+    font-family: var(--font-sans);
+    font-size: 11px;
+    font-weight: 600;
+    letter-spacing: 0.18em;
+    text-transform: uppercase;
+    line-height: 1.4;
+  }
+  .display {
+    font-family: var(--font-display);
+    line-height: 0.92;
+    letter-spacing: -0.02em;
+  }
+  .tnum {
+    font-variant-numeric: tabular-nums;
+  }
+  .plate-shadow {
+    box-shadow: 0 1px 2px rgba(10, 42, 94, 0.05), 0 12px 30px -18px rgba(10, 42, 94, 0.28);
+  }
+  .dark .plate-shadow {
+    box-shadow: 0 1px 2px rgba(0, 0, 0, 0.4), 0 18px 40px -26px rgba(0, 0, 0, 0.9);
+  }
+  .plate-shadow-lg {
+    box-shadow: 0 2px 4px rgba(10, 42, 94, 0.05), 0 30px 60px -32px rgba(10, 42, 94, 0.4);
+  }
+  .dark .plate-shadow-lg {
+    box-shadow: 0 2px 6px rgba(0, 0, 0, 0.5), 0 40px 70px -40px rgba(0, 0, 0, 1);
+  }
+  .rule {
+    border-top: 1px solid var(--color-line);
+  }
+  .grain::after {
+    content: "";
+    position: absolute;
+    inset: 0;
+    pointer-events: none;
+    opacity: 0.25;
+    mix-blend-mode: multiply;
+    background-image: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='120' height='120'%3E%3Cfilter id='n'%3E%3CfeTurbulence type='fractalNoise' baseFrequency='0.9' numOctaves='2'/%3E%3C/filter%3E%3Crect width='120' height='120' filter='url(%23n)' opacity='0.4'/%3E%3C/svg%3E");
+  }
+  .no-scrollbar {
+    -ms-overflow-style: none;
+    scrollbar-width: none;
+  }
+  .no-scrollbar::-webkit-scrollbar {
+    display: none;
+  }
+}
+
+/* ---- dark mode: surfaces built from tokens flip with them ---- */
+.dark h1,
+.dark h2,
+.dark h3,
+.dark .text-ink,
+.dark .hover\:text-ink:hover {
+  color: #eef3fc;
+}
+.dark .bg-white {
+  background-color: var(--color-card);
+}
+.dark .border-ink\/25 {
+  border-color: rgba(238, 243, 252, 0.3);
+}
+.dark .border-line\/70 {
+  border-color: rgba(36, 48, 75, 0.9);
+}
+.dark .hover\:border-ink\/40:hover,
+.dark .hover\:border-ink\/25:hover {
+  border-color: rgba(238, 243, 252, 0.45);
+}
+.dark .hover\:bg-ink\/5:hover {
+  background-color: rgba(238, 243, 252, 0.08);
+}
+.dark .from-ink\/25 {
+  --tw-gradient-from: rgba(10, 42, 94, 0.35);
+}
+/* dark blue plates keep their identity but separate from the page */
+.dark .bg-ink {
+  background-color: #10203f;
+}
+.dark .bg-ink-deep {
+  background-color: #070d1c;
+}
+.dark .bg-royal\/5 {
+  background-color: rgba(21, 96, 232, 0.14);
+}
+.dark .border-royal\/25 {
+  border-color: rgba(90, 145, 245, 0.4);
+}
+.dark .border-royal\/20 {
+  border-color: rgba(90, 145, 245, 0.35);
+}
+.dark .text-royal {
+  color: #6ea1f7;
+}
+.dark .hover\:text-royal:hover {
+  color: #8db5fa;
+}
+.dark .hover\:bg-plate:hover {
+  background-color: #1a2946;
+}
+.dark ::selection {
+  background: #1560e8;
+  color: #fff;
+}
+/* photography sits more comfortably on dark surfaces */
+.dark .grain img,
+.dark figure img {
+  filter: brightness(0.94) saturate(0.97);
+}
+/* form controls */
+.dark input,
+.dark select,
+.dark textarea {
+  background-color: var(--color-card);
+  border-color: var(--color-line);
+  color: var(--color-charcoal);
+}
+.dark input::placeholder,
+.dark textarea::placeholder {
+  color: rgba(163, 177, 204, 0.55);
+}
+
+/* ------------------------------ motion ------------------------------- */
+@keyframes lucomi-marquee {
+  from {
+    transform: translateX(0);
+  }
+  to {
+    transform: translateX(-50%);
+  }
+}
+.marquee-track {
+  animation: lucomi-marquee 38s linear infinite;
+  will-change: transform;
+}
+.marquee-track:hover {
+  animation-play-state: paused;
+}
+
+@keyframes lucomi-float-y {
+  0%,
+  100% {
+    transform: translateY(0);
+  }
+  50% {
+    transform: translateY(-8px);
+  }
+}
+.float-y {
+  animation: lucomi-float-y 5s ease-in-out infinite;
+}
+
+@media (prefers-reduced-motion: reduce) {
+  html {
+    scroll-behavior: auto;
+  }
+  *,
+  *::before,
+  *::after {
+    animation-duration: 0.001ms !important;
+    animation-iteration-count: 1 !important;
+    transition-duration: 0.001ms !important;
+  }
+}
