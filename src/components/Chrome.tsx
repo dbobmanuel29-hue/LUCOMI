@@ -95,7 +95,7 @@ export function ThemeToggle({ tone = "light" }: { tone?: "light" | "dark" }) {
       aria-pressed={dark}
       title={dark ? "Light mode" : "Dark mode"}
       className={cn(
-        "flex h-11 w-11 items-center justify-center rounded-full border transition-all duration-300 hover:rotate-12",
+        "flex h-10 w-10 items-center justify-center rounded-full border transition-all duration-300 hover:rotate-12",
         tone === "dark"
           ? "border-white/25 text-white hover:bg-white/10"
           : "border-line bg-white text-ink hover:border-ink/40",
@@ -168,7 +168,7 @@ export function SiteHeader() {
           scrolled ? "bg-paper/95 backdrop-blur-md shadow-[0_1px_0_rgba(10,42,94,0.08),0_10px_30px_-24px_rgba(10,42,94,0.5)]" : "bg-transparent",
         )}
       >
-        <div className="shell flex h-[76px] items-center justify-between gap-6">
+        <div className="shell flex h-[68px] items-center justify-between gap-3 sm:h-[72px] sm:gap-4 xl:h-[76px] xl:gap-6">
           <Logo />
           <nav className="hidden items-center gap-5 xl:flex" aria-label="Primary">
             {PRIMARY_NAV.map((item) => (
@@ -235,13 +235,13 @@ export function SiteHeader() {
             </div>
           </nav>
           <div className="flex items-center gap-3">
-            <Button onClick={() => open("", "Quote Request")} className="hidden sm:inline-flex" size="sm">
+            <Button onClick={() => open("", "Quote Request")} className="hidden xl:inline-flex" size="sm">
               Get Started
             </Button>
             <button
               type="button"
               onClick={openSearch}
-              className="flex h-11 w-11 items-center justify-center rounded-full border border-line bg-white text-ink transition-colors hover:border-royal hover:text-royal"
+              className="hidden h-10 w-10 items-center justify-center rounded-full border border-line bg-white text-ink transition-colors hover:border-royal hover:text-royal xl:flex"
               aria-label="Search furniture"
               title="Search furniture"
             >
@@ -250,7 +250,7 @@ export function SiteHeader() {
             <ThemeToggle />
             <button
               onClick={() => setMenuOpen(true)}
-              className="flex h-11 w-11 items-center justify-center rounded-full border border-line bg-white text-ink xl:hidden"
+              className="flex h-10 w-10 items-center justify-center rounded-full border border-line bg-white text-ink xl:hidden"
               aria-label="Open menu"
               aria-expanded={menuOpen}
             >
@@ -272,9 +272,9 @@ export function SiteHeader() {
             animate={{ opacity: 1 }}
             exit={{ opacity: 0 }}
             transition={{ duration: 0.25 }}
-            className="fixed inset-0 z-[90] flex h-dvh flex-col bg-ink text-white xl:hidden"
+            className="fixed inset-0 z-[90] flex h-dvh flex-col overflow-hidden bg-ink text-white xl:hidden"
           >
-            <div className="shell flex h-[76px] shrink-0 items-center justify-between gap-4">
+            <div className="shell flex h-[68px] shrink-0 items-center justify-between gap-3 sm:h-[72px] sm:gap-4">
               <Link to="/" className="flex shrink-0 items-center gap-3" aria-label="LUCOMI ENTERPRISE — home">
                 <Mark className="h-9 w-auto brightness-0 invert" />
                 <span className="leading-none">
@@ -284,7 +284,16 @@ export function SiteHeader() {
                   </span>
                 </span>
               </Link>
-              <div className="flex items-center gap-3">
+              <div className="flex items-center gap-2.5">
+                <button
+                  type="button"
+                  onClick={openSearch}
+                  className="flex h-10 w-10 items-center justify-center rounded-full border border-white/25 text-white"
+                  aria-label="Search furniture"
+                  title="Search furniture"
+                >
+                  <Search className="h-4 w-4" />
+                </button>
                 <ThemeToggle tone="dark" />
                 <button
                   onClick={() => setMenuOpen(false)}
@@ -311,7 +320,7 @@ export function SiteHeader() {
                     end={item.to === "/"}
                     className={({ isActive }) =>
                       cn(
-                        "flex items-baseline justify-between border-t border-white/15 py-4 text-[30px] leading-none",
+                        "flex items-baseline justify-between border-t border-white/15 py-4 text-[26px] leading-none sm:text-[30px]",
                         isActive ? "text-white" : "text-white/65",
                       )
                     }
@@ -323,13 +332,6 @@ export function SiteHeader() {
               ))}
             </nav>
             <div className="shell mt-4 shrink-0 space-y-2 pb-6">
-              <button
-                type="button"
-                onClick={openSearch}
-                className="flex w-full items-center justify-center gap-2 rounded-full border border-white/30 py-3 text-[11.5px] font-semibold uppercase tracking-[0.08em] text-white"
-              >
-                <Search className="h-4 w-4" /> Search furniture
-              </button>
               <Button
                 full
                 size="lg"
