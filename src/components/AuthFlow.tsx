@@ -24,7 +24,23 @@ function GoogleLogo() {
 
 export function AuthProvider({ children }: { children: React.ReactNode }) {
   const [open, setOpen] = useState(false);
-  const [user, setUser] = useState<AuthUser | null>(() => {\n    try {\n      const saved = localStorage.getItem("lucomi-auth-user");\n      return saved ? (JSON.parse(saved) as AuthUser) : null;\n    } catch {\n      return null;\n    }\n  });
+  const [user, setUser] = useState<AuthUser | null>(() => {
+    try {
+      const saved = localStorage.getItem("lucomi-auth-user");
+      return saved ? (JSON.parse(saved) as AuthUser) : null;
+    } catch {
+      return null;
+    }
+  });
+
+  const handleAuthenticated = (nextUser: AuthUser) => {
+    setUser(nextUser);
+    try {
+      localStorage.setItem("lucomi-auth-user", JSON.stringify(nextUser));
+    } catch {
+      /* storage unavailable */
+    }
+  };
 
   return (
     <AuthContext.Provider value={{ open: () => setOpen(true), user }}>
