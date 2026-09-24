@@ -3,6 +3,7 @@ import { AnimatePresence, motion } from "framer-motion";
 import { BrowserRouter, Outlet, Route, Routes, useLocation } from "react-router-dom";
 import { FloatingWhatsApp, MobileCTABar, SiteFooter, SiteHeader } from "./components/Chrome";
 import { QuoteProvider } from "./components/QuoteFlow";
+import { AuthProvider } from "./components/AuthFlow";
 import { Button, Micro } from "./components/ui";
 import Home from "./pages/Home";
 import About from "./pages/About";
@@ -97,8 +98,9 @@ export default function App() {
 
   return (
     <BrowserRouter>
-      <QuoteProvider>
-        <ScrollToTop />
+      <AuthProvider>
+        <QuoteProvider>
+          <ScrollToTop />
         <Routes>
           <Route element={<PublicLayout />}>
             <Route path="/" element={<Home />} />
@@ -127,7 +129,8 @@ export default function App() {
             <Route path="settings" element={<AdminSettings />} />
           </Route>
         </Routes>
-      </QuoteProvider>
+        </QuoteProvider>
+      </AuthProvider>
     </BrowserRouter>
   );
 }
