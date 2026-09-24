@@ -1,6 +1,6 @@
-import { useState } from "react";
+import { useRef, useState } from "react";
 import { Link, Navigate } from "react-router-dom";
-import { LockKeyhole, Save, UserCircle } from "lucide-react";
+import { Camera, LockKeyhole, Phone, Save, UserCircle, X } from "lucide-react";
 import { useAuth } from "../components/AuthFlow";
 import { Button, Field, Input, Micro, Notice, Reveal, usePageMeta } from "../components/ui";
 
@@ -8,16 +8,54 @@ export default function Account() {
   usePageMeta("My Account — LUCOMI ENTERPRISE", "Manage your LUCOMI account details and preferences.");
   const { user, updateUser, signOut } = useAuth();
   const [name, setName] = useState(user?.name ?? "");
+  const [phone, setPhone] = useState(user?.phone ?? "");
   const [photoURL, setPhotoURL] = useState(user?.photoURL ?? "");
   const [currentPassword, setCurrentPassword] = useState("");
   const [newPassword, setNewPassword] = useState("");
   const [message, setMessage] = useState("");
+  const [imageError, setImageError] = useState("");
+  const fileInputRef = useRef<HTMLInputElement>(null);
 
   if (!user) return <Navigate to="/" replace />;
 
+  const handleImageChange = (event: React.ChangeEvent<HTMLInputElement>) => {
+    const file = event.target.files?.[0];
+    if (!file) return;
+
+    setImageError("");
+    if (!file.type.startsWith("image/")) {
+      setImageError("Please choose an image file.");
+      return;
+    }
+    if (file.size > 3 * 1024 * 1024) {
+      setImageError("Please choose an image smaller than 3 MB.");
+      return;
+    }
+
+    const reader = new FileReader();
+    reader.onload = () => {
+      if (typeof reader.result === "string") {
+        setPhotoURL(reader.result);
+        setMessage("Profile image selected. Tap Save Profile to keep it.");
+      }
+    };
+    reader.onerror = () => setImageError("We couldn't read that image. Please try another file.");
+    reader.readAsDataURL(file);
+  };
+
+  const removeImage = () => {
+    setPhotoURL("");
+    if (fileInputRef.current) fileInputRef.current.value = "";
+    setMessage("Profile image removed. Tap Save Profile to confirm.");
+  };
+
   const saveProfile = (event: React.FormEvent) => {
     event.preventDefault();
-    updateUser({ name: name.trim() || user.name, photoURL: photoURL.trim() || undefined });
+    updateUser({
+      name: name.trim() || user.name,
+      phone: phone.trim() || undefined,
+      photoURL: photoURL || undefined,
+    });
     setMessage("Profile details saved.");
   };
 
@@ -41,14 +79,15 @@ export default function Account() {
           <span className="block pl-[5vw] italic">Profile.</span>
         </h1>
         <p className="mt-6 max-w-xl text-[15px] leading-relaxed text-mute">
-          Manage your personal details, profile image and account security from one place.
+          Manage your personal details, profile image, phone number and account security from one place.
         </p>
       </section>
 
       <section className="shell pb-24 pt-12">
         <div className="grid gap-8 lg:grid-cols-12">
-          <div className="lg:col-span-8 space-y-8">
+          <div className="space-y-8 lg:col-span-8">
             {message && <Notice title="Account update">{message}</Notice>}
+            {imageError && <Notice title="Image upload">{imageError}</Notice>}
 
             <Reveal>
               <form onSubmit={saveProfile} className="rounded-2xl border border-line bg-white p-5 sm:p-8">
@@ -61,15 +100,69 @@ export default function Account() {
                 </div>
 
                 <div className="mt-6 space-y-5">
+                  <Field label="Profile Image">
+                    <div className="flex flex-col gap-4 sm:flex-row sm:items-center">
+                      <div className="relative shrink-0">
+                        {photoURL ? (
+                          <>
+                            <img src={photoURL} alt="Profile preview" className="h-24 w-24 rounded-full border border-line object-cover" />
+                            <button
+                              type="button"
+                              onClick={removeImage}
+                              className="absolute -right-1 -top-1 flex h-7 w-7 items-center justify-center rounded-full bg-ink text-white shadow-sm"
+                              aria-label="Remove profile image"
+                            >
+                              <X className="h-4 w-4" />
+                            </button>
+                          </>
+                        ) : (
+                          <div className="flex h-24 w-24 items-center justify-center rounded-full bg-plate text-3xl font-bold text-royal">
+                            {name.charAt(0).toUpperCase() || <UserCircle className="h-10 w-10" />}
+                          </div>
+                        )}
+                      </div>
+
+                      <div className="min-w-0">
+                        <input
+                          ref={fileInputRef}
+                          type="file"
+                          accept="image/png,image/jpeg,image/webp,image/gif"
+                          onChange={handleImageChange}
+                          className="sr-only"
+                        />
+                        <Button type="button" variant="outline" onClick={() => fileInputRef.current?.click()}>
+                          <Camera className="h-4 w-4" /> Choose from device
+                        </Button>
+                        <p className="mt-2 text-xs leading-relaxed text-mute">
+                          Select a photo directly from your phone, tablet or computer. PNG, JPG, WEBP or GIF, up to 3 MB.
+                        </p>
+                      </div>
+                    </div>
+                  </Field>
+
                   <Field label="Full Name" required>
                     <Input value={name} onChange={(e) => setName(e.target.value)} required />
                   </Field>
+
                   <Field label="Email Address">
                     <Input value={user.email} disabled />
                   </Field>
-                  <Field label="Profile Image URL">
-                    <Input value={photoURL} onChange={(e) => setPhotoURL(e.target.value)} placeholder="https://..." />
+
+                  <Field label="Phone Number">
+                    <div className="relative">
+                      <Phone className="pointer-events-none absolute left-3 top-1/2 h-4 w-4 -translate-y-1/2 text-mute" />
+                      <Input
+                        type="tel"
+                        inputMode="tel"
+                        autoComplete="tel"
+                        value={phone}
+                        onChange={(e) => setPhone(e.target.value)}
+                        className="pl-10"
+                        placeholder="+234 800 000 0000"
+                      />
+                    </div>
                   </Field>
+
                   <Button type="submit"><Save className="h-4 w-4" /> Save Profile</Button>
                 </div>
               </form>
@@ -103,6 +196,7 @@ export default function Account() {
                 <div className="min-w-0">
                   <p className="truncate text-lg font-semibold">{user.name}</p>
                   <p className="truncate text-sm text-white/55">{user.email}</p>
+                  {user.phone && <p className="truncate text-xs text-white/50">{user.phone}</p>}
                 </div>
               </div>
               <p className="mt-6 text-xs leading-relaxed text-white/55">
