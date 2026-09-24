@@ -24,12 +24,12 @@ function GoogleLogo() {
 
 export function AuthProvider({ children }: { children: React.ReactNode }) {
   const [open, setOpen] = useState(false);
-  const [user, setUser] = useState<AuthUser | null>(null);
+  const [user, setUser] = useState<AuthUser | null>(() => {\n    try {\n      const saved = localStorage.getItem("lucomi-auth-user");\n      return saved ? (JSON.parse(saved) as AuthUser) : null;\n    } catch {\n      return null;\n    }\n  });
 
   return (
     <AuthContext.Provider value={{ open: () => setOpen(true), user }}>
       {children}
-      <AuthModal open={open} onClose={() => setOpen(false)} onAuthenticated={setUser} />
+      <AuthModal open={open} onClose={() => setOpen(false)} onAuthenticated={handleAuthenticated} />
     </AuthContext.Provider>
   );
 }
