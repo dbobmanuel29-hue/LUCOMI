@@ -67,7 +67,7 @@ export function Terms() {
   const settings = useSettings();
 
   return (
-    <LegalShell eyebrow="Legal" title="Terms &" italic="Conditions." updated="February 2025">
+    <LegalShell eyebrow="Legal" title="Terms &" italic="Conditions." updated="September 2026">
       <Clause n="01" title="Who we are">
         <p>
           LUCOMI ENTERPRISE ("LUCOMI", "we", "us") designs and manufactures office furniture from our factory at{" "}
@@ -142,7 +142,7 @@ export function Privacy() {
   const settings = useSettings();
 
   return (
-    <LegalShell eyebrow="Legal" title="Privacy" italic="Policy." updated="February 2025">
+    <LegalShell eyebrow="Legal" title="Privacy" italic="Policy." updated="September 2026">
       <Clause n="01" title="What this policy covers">
         <p>
           This policy explains how LUCOMI ENTERPRISE handles personal information collected through this website —
