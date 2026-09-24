@@ -79,20 +79,25 @@ export default function App() {
   const [ready, setReady] = useState(false);
 
   useEffect(() => {
+    const startedAt = performance.now();
+
     const finish = () => {
-      setReady(true);
-      requestAnimationFrame(() => document.getElementById("initial-loader")?.remove());
+      const elapsed = performance.now() - startedAt;
+      const remaining = Math.max(0, 3000 - elapsed);
+
+      window.setTimeout(() => {
+        setReady(true);
+        requestAnimationFrame(() => document.getElementById("initial-loader")?.remove());
+      }, remaining);
     };
+
     if (document.readyState === "complete") {
       finish();
       return;
     }
+
     window.addEventListener("load", finish, { once: true });
-    const fallback = window.setTimeout(finish, 1800);
-    return () => {
-      window.removeEventListener("load", finish);
-      window.clearTimeout(fallback);
-    };
+    return () => window.removeEventListener("load", finish);
   }, []);
 
   if (!ready) return null;
