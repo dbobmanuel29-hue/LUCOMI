@@ -6,6 +6,7 @@
     <meta name="theme-color" media="(prefers-color-scheme: light)" content="#F1F3F6" />
     <meta name="theme-color" media="(prefers-color-scheme: dark)" content="#0A0F1A" />
     <link rel="icon" href="/favicon.svg" type="image/svg+xml" />
+    <link rel="preload" as="image" href="/images/hero-executive-office.jpg" fetchpriority="high" />
     <link rel="shortcut icon" href="/favicon.svg" type="image/svg+xml" />
     <link rel="apple-touch-icon" href="/favicon.svg" />
     <script>
@@ -15,6 +16,14 @@
         }
       } catch (e) {}
     </script>
+    <style>
+      #initial-loader{position:fixed;inset:0;z-index:9999;display:grid;place-items:center;background:#f1f3f6;color:#0a2a5e}
+      #initial-loader .loader-inner{text-align:center}
+      #initial-loader .loader-mark{width:48px;height:48px;margin:0 auto 16px;border:2px solid rgba(21,96,232,.18);border-top-color:#1560e8;border-radius:50%;animation:lucomi-spin .7s linear infinite}
+      #initial-loader .loader-text{font:600 11px/1.4 Arial,sans-serif;letter-spacing:.22em}
+      @keyframes lucomi-spin{to{transform:rotate(360deg)}}
+      @media(prefers-reduced-motion:reduce){#initial-loader .loader-mark{animation:none}}
+    </style>
     <title>LUCOMI ENTERPRISE — Quality Office Furniture, Better Workspaces</title>
     <meta
       name="description"
@@ -48,11 +57,12 @@
         "description": "Design and manufacture of professional office furniture for businesses, organisations and modern workplaces.",
         "slogan": "Quality Office Furniture • Better Workspaces",
         "logo": "https://lucomienterprise.com/favicon.svg",
-        "image": "https://lucomienterprise.com/favicon.svg",
+        "image": "https://lucomienterprise.com/favicon.svg"
       }
     </script>
   </head>
   <body>
+    <div id="initial-loader" aria-label="Loading LUCOMI ENTERPRISE" role="status"><div class="loader-inner"><div class="loader-mark"></div><div class="loader-text">LUCOMI ENTERPRISE</div></div></div>
     <div id="root"></div>
     <script type="module" src="/src/main.tsx"></script>
   </body>
