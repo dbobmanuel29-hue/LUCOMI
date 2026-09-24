@@ -114,7 +114,7 @@ export function SiteHeader() {
   const [moreOpen, setMoreOpen] = useState(false);
   const [searchOpen, setSearchOpen] = useState(false);
   const { open } = useQuote();
-  const { open: openAuth } = useAuth();
+  const { open: openAuth, user } = useAuth();
   const location = useLocation();
   const moreRef = useRef<HTMLDivElement>(null);
   const closeSearch = useCallback(() => setSearchOpen(false), []);
