@@ -1,4 +1,4 @@
-import { useEffect } from "react";
+import { useEffect, useState } from "react";
 import { AnimatePresence, motion } from "framer-motion";
 import { BrowserRouter, Outlet, Route, Routes, useLocation } from "react-router-dom";
 import { FloatingWhatsApp, MobileCTABar, SiteFooter, SiteHeader } from "./components/Chrome";
@@ -30,16 +30,16 @@ function PublicLayout() {
   const location = useLocation();
 
   return (
-    <>
+    <motion.div initial={{ opacity: 0 }} animate={{ opacity: 1 }} transition={{ duration: 0.2, ease: "easeOut" }}>
       <SiteHeader />
       <main className="pb-[68px] lg:pb-0">
         <AnimatePresence mode="wait" initial={false}>
           <motion.div
             key={location.pathname}
-            initial={{ opacity: 0, y: 10 }}
-            animate={{ opacity: 1, y: 0 }}
-            exit={{ opacity: 0, y: -8 }}
-            transition={{ duration: 0.38, ease: [0.22, 0.61, 0.36, 1] }}
+            initial={{ opacity: 0 }}
+            animate={{ opacity: 1 }}
+            exit={{ opacity: 0 }}
+            transition={{ duration: 0.18, ease: "easeOut" }}
           >
             <Outlet />
           </motion.div>
@@ -48,7 +48,7 @@ function PublicLayout() {
       <SiteFooter />
       <FloatingWhatsApp />
       <MobileCTABar />
-    </>
+    </motion.div>
   );
 }
 
@@ -74,6 +74,27 @@ function NotFound() {
 }
 
 export default function App() {
+  const [ready, setReady] = useState(false);
+
+  useEffect(() => {
+    const finish = () => {
+      setReady(true);
+      requestAnimationFrame(() => document.getElementById("initial-loader")?.remove());
+    };
+    if (document.readyState === "complete") {
+      finish();
+      return;
+    }
+    window.addEventListener("load", finish, { once: true });
+    const fallback = window.setTimeout(finish, 1800);
+    return () => {
+      window.removeEventListener("load", finish);
+      window.clearTimeout(fallback);
+    };
+  }, []);
+
+  if (!ready) return null;
+
   return (
     <BrowserRouter>
       <QuoteProvider>
