@@ -118,6 +118,7 @@ export function SiteHeader() {
   const { open: openAuth, user, signOut } = useAuth();
   const location = useLocation();
   const moreRef = useRef<HTMLDivElement>(null);
+  const profileRef = useRef<HTMLDivElement>(null);
   const closeSearch = useCallback(() => setSearchOpen(false), []);
   const { scrollYProgress } = useScroll();
   const progress = useSpring(scrollYProgress, { stiffness: 140, damping: 26, restDelta: 0.001 });
@@ -138,10 +139,15 @@ export function SiteHeader() {
 
   useEffect(() => {
     const dismiss = (event: PointerEvent) => {
-      if (!moreRef.current?.contains(event.target as Node)) setMoreOpen(false);
+      const target = event.target as Node;
+      if (!moreRef.current?.contains(target)) setMoreOpen(false);
+      if (!profileRef.current?.contains(target)) setProfileOpen(false);
     };
     const escape = (event: KeyboardEvent) => {
-      if (event.key === "Escape") setMoreOpen(false);
+      if (event.key === "Escape") {
+        setMoreOpen(false);
+        setProfileOpen(false);
+      }
     };
     document.addEventListener("pointerdown", dismiss);
     document.addEventListener("keydown", escape);
@@ -239,7 +245,7 @@ export function SiteHeader() {
           </nav>
           <div className="flex items-center gap-3">
             {user ? (
-              <div className="relative hidden xl:block">
+              <div ref={profileRef} className="relative hidden xl:block">
                 <button type="button" onClick={() => setProfileOpen((value) => !value)} className="flex items-center gap-2 rounded-full border border-line bg-white px-3 py-1.5 shadow-sm">
                   {user.photoURL ? <img src={user.photoURL} alt="" className="h-8 w-8 rounded-full object-cover" /> : <span className="flex h-8 w-8 items-center justify-center rounded-full bg-royal text-xs font-bold text-white">{user.name.charAt(0).toUpperCase()}</span>}
                   <span className="max-w-28 truncate text-sm font-semibold text-ink">{user.name}</span>
@@ -359,7 +365,22 @@ export function SiteHeader() {
                       <p className="truncate font-semibold text-white">{user.name}</p>
                       <p className="truncate text-xs text-white/55">{user.email}</p>
                     </div>
-                    <button type="button" onClick={() => { signOut(); setMenuOpen(false); }} className="rounded-full border border-white/20 px-3 py-2 text-xs font-semibold text-white/80 hover:bg-white/10">Sign Out</button>
+                  </div>
+                  <div className="mt-3 grid grid-cols-2 gap-2">
+                    <Link
+                      to="/account"
+                      onClick={() => setMenuOpen(false)}
+                      className="rounded-xl bg-white px-3 py-2.5 text-center text-xs font-bold text-ink hover:bg-white/90"
+                    >
+                      Manage Account
+                    </Link>
+                    <button
+                      type="button"
+                      onClick={() => { signOut(); setMenuOpen(false); }}
+                      className="rounded-xl border border-white/20 px-3 py-2.5 text-xs font-semibold text-white/80 hover:bg-white/10"
+                    >
+                      Sign Out
+                    </button>
                   </div>
                 </div>
               ) : (
