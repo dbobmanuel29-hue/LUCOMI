@@ -118,6 +118,17 @@ export interface TeamMember {
   featured: boolean;
 }
 
+export interface UserProfile {
+  uid: string;
+  name: string;
+  email: string;
+  phone: string;
+  photoURL: string;
+  provider: "email" | "google";
+  createdAt: string;
+  updatedAt: string;
+}
+
 export interface AdminUser {
   id: string;
   email: string;
