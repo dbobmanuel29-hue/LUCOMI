@@ -14,6 +14,7 @@ import Projects from "./pages/Projects";
 import Contact from "./pages/Contact";
 import Team from "./pages/Team";
 import Reviews from "./pages/Reviews";
+import Account from "./pages/Account";
 import { Privacy, Terms } from "./pages/Legal";
 import { AdminLayout, AdminLogin, Dashboard } from "./admin/AdminShell";
 import { AdminCategories, AdminProducts } from "./admin/AdminCatalog";
@@ -114,6 +115,7 @@ export default function App() {
             <Route path="/contact" element={<Contact />} />
             <Route path="/terms" element={<Terms />} />
             <Route path="/privacy" element={<Privacy />} />
+            <Route path="/account" element={<Account />} />
             <Route path="*" element={<NotFound />} />
           </Route>
 
