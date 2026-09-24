@@ -80,11 +80,13 @@ function AuthModal({
   const [submitted, setSubmitted] = useState(false);
   const [name, setName] = useState("");
   const [email, setEmail] = useState("");
+  const [password, setPassword] = useState("");
 
   const authenticate = (provider: "email" | "google") => {
     onAuthenticated({
       name: provider === "google" ? "Google User" : name.trim() || "LUCOMI User",
       email: provider === "google" ? "Google account" : email.trim(),
+      phone: "",
       provider,
     });
     setSubmitted(true);
@@ -150,7 +152,7 @@ function AuthModal({
             <Field label="Password" required>
               <div className="relative">
                 <LockKeyhole className="pointer-events-none absolute left-3 top-1/2 h-4 w-4 -translate-y-1/2 text-mute" />
-                <Input required minLength={6} type={showPassword ? "text" : "password"} className="pl-10 pr-10" placeholder="••••••••" />
+                <Input required minLength={6} value={password} onChange={(e) => setPassword(e.target.value)} type={showPassword ? "text" : "password"} className="pl-10 pr-10" placeholder="••••••••" />
                 <button type="button" onClick={() => setShowPassword((v) => !v)} className="absolute right-3 top-1/2 -translate-y-1/2 text-mute hover:text-ink" aria-label={showPassword ? "Hide password" : "Show password"}>
                   {showPassword ? <EyeOff className="h-4 w-4" /> : <Eye className="h-4 w-4" />}
                 </button>
