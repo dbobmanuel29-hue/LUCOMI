@@ -3,7 +3,7 @@ import { Eye, EyeOff, LockKeyhole, Mail, User } from "lucide-react";
 import { Button, Field, Input, Modal, Notice } from "./ui";
 
 type AuthMode = "signin" | "signup";
-export type AuthUser = { name: string; email: string; photoURL?: string; provider: "email" | "google" };
+export type AuthUser = { name: string; email: string; phone?: string; photoURL?: string; provider: "email" | "google" };
 
 const AuthContext = createContext<{ open: () => void; user: AuthUser | null; updateUser: (changes: Partial<AuthUser>) => void; signOut: () => void }>({
   open: () => {},
