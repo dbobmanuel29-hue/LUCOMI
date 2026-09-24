@@ -534,7 +534,7 @@ export function FloatingWhatsApp() {
 export function MobileCTABar() {
   const { open } = useQuote();
   return (
-    <div className="fixed inset-x-0 bottom-0 z-[60] grid grid-cols-2 gap-px border-t border-line bg-line lg:hidden">
+    <div className="safe-bottom fixed inset-x-0 bottom-0 z-[60] grid grid-cols-2 gap-px border-t border-line bg-line lg:hidden">
       <button
         onClick={() => open("", "Quote Request")}
         className="bg-ink py-4 text-[11.5px] font-semibold uppercase tracking-[0.08em] text-white"
