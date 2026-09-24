@@ -323,16 +323,10 @@
     letter-spacing: 0.14em;
   }
 
-  /* Keep CTA text and controls comfortable on narrow phones. */
-  button,
-  a {
+  /* Keep narrow-screen typography and controls comfortable without changing
+     the height of ordinary navigation/footer links. */
+  button:not([aria-label]) {
     min-height: 44px;
-  }
-
-  /* Do not force icon-only controls to become oversized. */
-  button[aria-label],
-  a[aria-label] {
-    min-height: 0;
   }
 }
 
