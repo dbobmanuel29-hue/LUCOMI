@@ -16,7 +16,7 @@ import type {
   Testimonial,
 } from "./types";
 
-const LATENCY = 420;
+const LATENCY = 70;
 const wait = <T,>(value: T, ms = LATENCY): Promise<T> =>
   new Promise((resolve) => setTimeout(() => resolve(value), ms));
 
