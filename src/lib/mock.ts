@@ -16,7 +16,7 @@ const portrait = (id: number, w = 800) =>
   `${PX}/${id}/pexels-photo-${id}.jpeg?auto=compress&cs=tinysrgb&fit=crop&h=1200&w=${w}`;
 
 export const IMG = {
-  hero: "images/hero-executive-office.jpg",
+  hero: "/images/hero-executive-office.jpg",
   heroDirector: portrait(34687888, 900),
   teamFounder: portrait(28426646),
   teamDesigner: portrait(5393762),
@@ -27,15 +27,15 @@ export const IMG = {
   testimonialA: portrait(7468194),
   testimonialB: portrait(9363120),
   testimonialC: portrait(16306778),
-  executiveDesk: "images/product-executive-desk.jpg",
-  conference: "images/product-conference-table.jpg",
-  reception: "images/product-reception-desk.jpg",
-  workstations: "images/product-workstations.jpg",
-  chair: "images/product-office-chair.jpg",
-  storage: "images/product-storage-cabinet.jpg",
-  workshop: "images/workshop-craftsmanship.jpg",
-  custom: "images/custom-design-samples.jpg",
-  project: "images/project-corporate-office.jpg",
+  executiveDesk: "/images/product-executive-desk.jpg",
+  conference: "/images/product-conference-table.jpg",
+  reception: "/images/product-reception-desk.jpg",
+  workstations: "/images/product-workstations.jpg",
+  chair: "/images/product-office-chair.jpg",
+  storage: "/images/product-storage-cabinet.jpg",
+  workshop: "/images/workshop-craftsmanship.jpg",
+  custom: "/images/custom-design-samples.jpg",
+  project: "/images/project-corporate-office.jpg",
 };
 
 export const categories: Category[] = [
