@@ -1,4 +1,3 @@
-import { useState } from "react";
 import { Link } from "react-router-dom";
 import { cn } from "../lib/helpers";
 
@@ -82,19 +81,9 @@ const Wordmark = ({ className }: { className?: string }) => (
 );
 
 export function Logo({ className, href = "/" }: { className?: string; href?: string }) {
-  const [failed, setFailed] = useState(false);
   return (
     <Link to={href} className={cn("flex items-center gap-3", className)} aria-label="LUCOMI ENTERPRISE — home">
-      {failed ? (
-        <Mark className="h-10 w-auto" />
-      ) : (
-        <img
-          src="images/lucomi-logo.png"
-          alt="LUCOMI ENTERPRISE — quality office furniture, better workspaces"
-          className="h-11 w-auto"
-          onError={() => setFailed(true)}
-        />
-      )}
+      <Mark className="h-10 w-auto" aria-label="LUCOMI ENTERPRISE — quality office furniture, better workspaces" />
       <span className="hidden sm:block leading-none">
         <span className="block font-sans text-[19px] font-bold tracking-[0.02em] text-ink">LUCOMI</span>
           <span className="block font-sans text-[8.5px] font-semibold tracking-[0.34em] text-royal">ENTERPRISE</span>
@@ -104,23 +93,13 @@ export function Logo({ className, href = "/" }: { className?: string; href?: str
 }
 
 export function LogoLockup({ className, tone = "light" }: { className?: string; tone?: "light" | "ink" }) {
-  const [failed, setFailed] = useState(false);
   return (
     <div className={cn("w-[220px] max-w-full", className)}>
-      {failed ? (
-        <div className={cn(tone === "ink" && "brightness-0 invert")}>
+      <div className={cn(tone === "ink" && "brightness-0 invert")}>
           <Mark className="h-24 w-auto" />
           <Wordmark className="-mt-2 w-[220px]" />
           <p className="micro mt-2 text-center text-mute">Quality Office Furniture • Better Workspaces</p>
-        </div>
-      ) : (
-        <img
-          src="images/lucomi-logo.png"
-          alt="LUCOMI ENTERPRISE — Quality Office Furniture, Better Workspaces"
-          className="w-full"
-          onError={() => setFailed(true)}
-        />
-      )}
+      </div>
     </div>
   );
 }
