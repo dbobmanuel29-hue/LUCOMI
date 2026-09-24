@@ -347,6 +347,15 @@ export function usePageMeta(title: string, description: string) {
     set('meta[name="description"]', "content", description);
     set('meta[property="og:title"]', "content", title);
     set('meta[property="og:description"]', "content", description);
+    set('meta[property="og:type"]', "content", "website");
+    set('meta[property="og:url"]', "content", window.location.href.split("?")[0]);
+    let canonical = document.head.querySelector('link[rel="canonical"]') as HTMLLinkElement | null;
+    if (!canonical) {
+      canonical = document.createElement("link");
+      canonical.rel = "canonical";
+      document.head.appendChild(canonical);
+    }
+    canonical.href = window.location.href.split("?")[0];
   }, [title, description]);
 }
 
