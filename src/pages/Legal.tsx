@@ -76,9 +76,10 @@ export function Terms() {
       </Clause>
       <Clause n="02" title="Quotations & pricing">
         <p>
-          Product prices are quoted individually because they depend on dimensions, materials, finishes and quantity.
-          A quotation is an offer that remains valid for the period stated on it. No order exists until you approve a
-          quotation and we confirm acceptance.
+          Product prices are quoted individually because they may depend on dimensions, materials, finishes and quantity.
+          Any quotation issued by LUCOMI will state its validity period and the terms that apply. An order becomes
+          binding only when the quotation and any required deposit or payment have been accepted in accordance with the
+          terms communicated to you.
         </p>
         <p>Prices shown as "Price on Request" or "Contact for Price" are not offers and carry no committed price.</p>
       </Clause>
@@ -97,16 +98,18 @@ export function Terms() {
       </Clause>
       <Clause n="05" title="Cancellations & returns">
         <p>
-          Because custom furniture is manufactured specifically for you, cancellations after production has begun may
-          incur costs for work completed and materials committed. Standard catalogue items are handled case by case —
-          contact us and we will find a fair outcome.
+          Because custom furniture may be manufactured specifically to an approved specification, cancellation terms may
+          depend on the stage of production and the materials or services already committed. Any applicable cancellation,
+          return, refund or restocking terms will be stated in the relevant quotation or order. Please contact LUCOMI
+          promptly if you need to change or cancel an order.
         </p>
       </Clause>
       <Clause n="06" title="Workmanship">
         <p>
-          We stand behind our workmanship. If a piece develops a fault arising from manufacture under normal office
-          use, contact us and we will inspect and repair or make good as appropriate. This does not cover misuse,
-          alteration by others or normal wear.
+          Any warranty or workmanship commitment applicable to an order will be stated in the relevant quotation, invoice or
+          warranty document. Where a manufacturing defect is covered, contact LUCOMI so the issue can be inspected and
+          the appropriate remedy can be determined. Warranty coverage may not extend to misuse, unauthorised alteration,
+          improper installation, accident or ordinary wear and tear.
         </p>
       </Clause>
       <Clause n="07" title="Website content">
@@ -118,8 +121,9 @@ export function Terms() {
       </Clause>
       <Clause n="08" title="Liability">
         <p>
-          Nothing in these terms excludes liability that cannot be excluded under Nigerian law. Beyond that, our
-          liability in connection with an order is limited to the price paid for that order.
+          Nothing in these terms excludes or limits liability where doing so would be unlawful under Nigerian law. Any
+          other limitation of liability applicable to an order will be stated in the relevant quotation, contract or
+          order terms.
         </p>
       </Clause>
       <Clause n="09" title="Governing law">
@@ -145,9 +149,9 @@ export function Privacy() {
     <LegalShell eyebrow="Legal" title="Privacy" italic="Policy." updated="September 2026">
       <Clause n="01" title="What this policy covers">
         <p>
-          This policy explains how LUCOMI ENTERPRISE handles personal information collected through this website —
-          enquiry and quotation forms, the custom project form, the review form and WhatsApp conversations you start
-          from the site.
+          This policy explains how LUCOMI ENTERPRISE handles personal information collected through this website and through
+          related customer interactions, including enquiry and quotation forms, custom project submissions, reviews and
+          WhatsApp conversations you choose to start from the site.
         </p>
       </Clause>
       <Clause n="02" title="Information we collect">
@@ -161,14 +165,15 @@ export function Privacy() {
         </ul>
       </Clause>
       <Clause n="03" title="How we use it">
-        <p>We use your information to:</p>
+        <p>Depending on the interaction, we may use your information to:</p>
         <ul className="list-disc space-y-1 pl-5">
           <li>Respond to enquiries and prepare quotations</li>
           <li>Plan, produce, deliver and install your order</li>
           <li>Verify and, with your consent, publish your review</li>
           <li>Keep records required for business and legal purposes</li>
         </ul>
-        <p>We do not sell your personal information.</p>
+        <p>We do not sell your personal information. We use it only for the purposes described in this policy or where otherwise
+          permitted or required by applicable law.</p>
       </Clause>
       <Clause n="04" title="Reviews">
         <p>
@@ -178,34 +183,53 @@ export function Privacy() {
       </Clause>
       <Clause n="05" title="WhatsApp & third parties">
         <p>
-          Choosing "WhatsApp Us" opens WhatsApp, which is operated by Meta and governed by its own privacy policy.
-          Website media may be served by third-party hosting providers (for example our image hosting service); these
-          providers receive standard technical data such as your IP address when images load.
+          Choosing "WhatsApp Us" opens WhatsApp, which is operated by Meta and governed by Meta's own terms and privacy
+          policy. We may also use service providers for website hosting, database services, image/media hosting, email or
+          other technical functions. Those providers may process information on our behalf and may process or store it
+          outside Nigeria where applicable safeguards and legal requirements permit.
         </p>
       </Clause>
       <Clause n="06" title="Storage & security">
         <p>
-          Enquiry records are kept only as long as needed to serve you and meet our legal obligations. We take
-          reasonable technical and organisational steps to protect the information we hold.
+          We retain personal information only for as long as reasonably necessary for the purpose for which it was collected,
+          to complete transactions, resolve disputes, maintain appropriate business records or comply with legal
+          obligations. We take reasonable technical and organisational measures to protect the information we hold,
+          while recognising that no internet transmission or storage system can be guaranteed to be completely secure.
         </p>
       </Clause>
       <Clause n="07" title="Your choices">
         <p>
-          You may ask us at any time to correct or delete the personal information we hold about you, or to remove a
-          published review. Write to {settings.email} and we will act on your request.
+          Subject to applicable law, you may ask us for information about personal data we hold about you and may request
+          correction, deletion, restriction or objection where the law gives you that right. You may also withdraw consent
+          where processing is based on consent. To make a request, contact {settings.email}. We may need to verify your
+          identity before acting on a request, and some records may need to be retained where required by law.
         </p>
       </Clause>
       <Clause n="08" title="Children">
         <p>This website is intended for business customers and is not directed at children.</p>
       </Clause>
-      <Clause n="09" title="Changes to this policy">
+      <Clause n="09" title="Cookies & technical information">
+        <p>
+          The website may process limited technical information such as browser, device, IP address and basic usage
+          information that is normally transmitted when a website is accessed. Where cookies or similar technologies are
+          used beyond what is technically necessary, LUCOMI will provide any notice or choice required by applicable law.
+        </p>
+      </Clause>
+      <Clause n="10" title="Data-protection complaints">
+        <p>
+          If you have a concern about how LUCOMI handles your personal information, please contact us first so we can
+          investigate and respond. You may also have the right to complain to the Nigeria Data Protection Commission
+          (NDPC) under applicable data-protection law.
+        </p>
+      </Clause>
+      <Clause n="11" title="Changes to this policy">
         <p>
           If this policy changes, the updated version will be published on this page with a new "last updated" date.
         </p>
       </Clause>
-      <Clause n="10" title="Contact">
+      <Clause n="12" title="Contact">
         <p>
-          Privacy questions: {settings.email} · {settings.address}
+          Privacy questions or data-protection requests: {settings.email} · {settings.address}
         </p>
       </Clause>
     </LegalShell>
