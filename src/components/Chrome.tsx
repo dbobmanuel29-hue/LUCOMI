@@ -112,6 +112,7 @@ export function SiteHeader() {
   const [scrolled, setScrolled] = useState(false);
   const [menuOpen, setMenuOpen] = useState(false);
   const [moreOpen, setMoreOpen] = useState(false);
+  const [profileOpen, setProfileOpen] = useState(false);
   const [searchOpen, setSearchOpen] = useState(false);
   const { open } = useQuote();
   const { open: openAuth, user, signOut } = useAuth();
@@ -131,6 +132,7 @@ export function SiteHeader() {
   useEffect(() => {
     setMenuOpen(false);
     setMoreOpen(false);
+    setProfileOpen(false);
     setSearchOpen(false);
   }, [location.pathname]);
 
@@ -238,16 +240,17 @@ export function SiteHeader() {
           <div className="flex items-center gap-3">
             {user ? (
               <div className="relative hidden xl:block">
-                <button type="button" onClick={() => setMoreOpen((value) => !value)} className="flex items-center gap-2 rounded-full border border-line bg-white px-3 py-1.5 shadow-sm">
+                <button type="button" onClick={() => setProfileOpen((value) => !value)} className="flex items-center gap-2 rounded-full border border-line bg-white px-3 py-1.5 shadow-sm">
                   {user.photoURL ? <img src={user.photoURL} alt="" className="h-8 w-8 rounded-full object-cover" /> : <span className="flex h-8 w-8 items-center justify-center rounded-full bg-royal text-xs font-bold text-white">{user.name.charAt(0).toUpperCase()}</span>}
                   <span className="max-w-28 truncate text-sm font-semibold text-ink">{user.name}</span>
-                  <ChevronDown className={cn("h-3.5 w-3.5", moreOpen && "rotate-180")} />
+                  <ChevronDown className={cn("h-3.5 w-3.5", profileOpen && "rotate-180")} />
                 </button>
-                {moreOpen && (
+                {profileOpen && (
                   <div className="absolute right-0 top-full mt-3 w-64 rounded-xl border border-line bg-paper p-4 plate-shadow-lg">
                     <p className="truncate font-semibold text-ink">{user.name}</p>
                     <p className="mt-1 truncate text-xs text-mute">{user.email}</p>
-                    <button type="button" onClick={() => { signOut(); setMoreOpen(false); }} className="mt-4 w-full rounded-lg border border-line px-3 py-2 text-left text-sm font-semibold text-ink hover:bg-plate">Sign Out</button>
+                    <Link to="/account" onClick={() => setProfileOpen(false)} className="mt-3 block rounded-lg bg-royal px-3 py-2 text-center text-sm font-semibold text-white hover:opacity-90">Manage Account</Link>
+                    <button type="button" onClick={() => { signOut(); setProfileOpen(false); }} className="mt-4 w-full rounded-lg border border-line px-3 py-2 text-left text-sm font-semibold text-ink hover:bg-plate">Sign Out</button>
                   </div>
                 )}
               </div>
