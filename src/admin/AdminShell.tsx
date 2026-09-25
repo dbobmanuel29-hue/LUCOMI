@@ -142,10 +142,11 @@ export function AdminLayout() {
   const [openMenu, setOpenMenu] = useState(false);
   const [access, setAccess] = useState<"checking" | "allowed" | "denied">("checking");
   const navigate = useNavigate();
-  const { user } = useAuth();
+  const { user, authReady } = useAuth();
 
   useEffect(() => {
     let cancelled = false;
+    if (!authReady) return;
     if (!user) {
       setAccess("denied");
       navigate("/admin/login", { replace: true });
@@ -166,7 +167,7 @@ export function AdminLayout() {
     return () => {
       cancelled = true;
     };
-  }, [user, navigate]);
+  }, [user, authReady, navigate]);
 
   if (access !== "allowed") {
     return (
