@@ -79,7 +79,7 @@ service cloud.firestore {
     }
 
     match /team/{id} {
-      allow read: if isAdmin() || resource.data.published == true || resource.data.get("published", true) == true;
+      allow read: if isAdmin() || resource.data.get("published", true) == true;
       allow write: if isAdmin();
     }
 
