@@ -1,8 +1,7 @@
 import { useState } from "react";
-import { WhatsAppIcon } from "../components/BrandIcons";
 import { api } from "../lib/api";
 import { IMG } from "../lib/mock";
-import { quoteMessage, waLink } from "../lib/helpers";
+import { quoteMessage } from "../lib/helpers";
 import { ImageUpload } from "../components/ImageUpload";
 import { useQuote, WhatsAppLink } from "../components/QuoteFlow";
 import { Accordion, Button, Field, Input, Marquee, Micro, Notice, RadioRow, Reveal, Select, Textarea, usePageMeta } from "../components/ui";
