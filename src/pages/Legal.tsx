@@ -129,7 +129,25 @@ export function Terms() {
       <Clause n="09" title="Governing law">
         <p>These terms are governed by the laws of the Federal Republic of Nigeria.</p>
       </Clause>
-      <Clause n="10" title="Contact">
+      <Clause n="10" title="Accounts, password resets & data retention">
+        <p>
+          Some website features require a signed-in LUCOMI account. You may browse the website and follow our social
+          profiles without an account, but enquiries, quotation requests, direct contact and customer reviews require
+          you to be signed in.
+        </p>
+        <p>
+          If you forget your password, you may request up to two password-reset emails per day. Reset links are sent to
+          the email address associated with your account. If you do not see the message in your normal inbox, please
+          check your Spam or Junk folder because automated security emails can sometimes be filtered there.
+        </p>
+        <p>
+          Customer account information and associated customer history held by LUCOMI are retained for one year from the
+          date you first registered an account. After that retention period, the account and associated customer history
+          are scheduled for deletion, subject to any information that LUCOMI is legally required to retain. LUCOMI
+          administrative accounts are excluded from this customer-retention deletion policy.
+        </p>
+      </Clause>
+      <Clause n="11" title="Contact">
         <p>
           Questions about these terms: {settings.email} · {settings.phone.join(" / ")}
         </p>
@@ -191,13 +209,20 @@ export function Privacy() {
       </Clause>
       <Clause n="06" title="Storage & security">
         <p>
-          We retain personal information only for as long as reasonably necessary for the purpose for which it was collected,
-          to complete transactions, resolve disputes, maintain appropriate business records or comply with legal
-          obligations. We take reasonable technical and organisational measures to protect the information we hold,
-          while recognising that no internet transmission or storage system can be guaranteed to be completely secure.
+          Customer account information and associated customer history are retained for one year from the date the customer
+          first registered an account. After that period, the account and associated customer history are scheduled for
+          deletion, subject to information LUCOMI is legally required to retain. Administrative accounts are excluded from
+          this customer-retention deletion policy. We also retain information for as long as reasonably necessary to
+          complete transactions, resolve disputes, maintain appropriate business records or comply with legal obligations.
+          We take reasonable technical and organisational measures to protect the information we hold, while recognising
+          that no internet transmission or storage system can be guaranteed to be completely secure.
         </p>
       </Clause>
-      <Clause n="07" title="Your choices">
+      <Clause n="07" title="Password resets & your choices">
+        <p>
+          If you use the password-reset feature, you may request up to two reset emails per day. If the reset message does
+          not appear in your normal inbox, check your Spam or Junk folder.
+        </p>
         <p>
           Subject to applicable law, you may ask us for information about personal data we hold about you and may request
           correction, deletion, restriction or objection where the law gives you that right. You may also withdraw consent
