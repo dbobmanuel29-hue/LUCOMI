@@ -280,13 +280,20 @@ export function AdminPageHead({
   description: string;
   action?: React.ReactNode;
 }) {
+  const refresh = () => window.location.reload();
+
   return (
     <div className="mb-8 flex flex-col gap-4 sm:flex-row sm:items-end sm:justify-between">
       <div>
         <h1 className="display text-[clamp(2.2rem,4vw,3.2rem)]">{title}</h1>
         <p className="mt-2 max-w-2xl text-[14.5px] text-mute">{description}</p>
       </div>
-      {action}
+      <div className="flex flex-wrap items-center gap-2">
+        <Button variant="outline" onClick={refresh} aria-label={`Refresh ${title}`}>
+          <RefreshCw className="h-4 w-4" /> Refresh
+        </Button>
+        {action}
+      </div>
     </div>
   );
 }
@@ -362,13 +369,9 @@ export function Dashboard() {
     <>
       <AdminPageHead
         title="Overview"
-        description="Catalogue and enquiry activity. Figures below are mock values used for interface development and will be replaced by live Firestore data."
+        description="Catalogue and enquiry activity across the LUCOMI website."
         action={<Button href="/admin/products">Manage Products</Button>}
       />
-
-      <Notice tone="info" title="Frontend preview">
-        Mock data only — no analytics are being measured and no backend is connected yet.
-      </Notice>
 
       <div className="mt-6 grid gap-4 sm:grid-cols-2 lg:grid-cols-5">
         {loading ? (
