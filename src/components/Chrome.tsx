@@ -115,7 +115,7 @@ export function SiteHeader() {
   const [profileOpen, setProfileOpen] = useState(false);
   const [searchOpen, setSearchOpen] = useState(false);
   const { open } = useQuote();
-  const { open: openAuth, user, signOut } = useAuth();
+  const { open: openAuth, user, isAdmin, signOut } = useAuth();
   const location = useLocation();
   const moreRef = useRef<HTMLDivElement>(null);
   const profileRef = useRef<HTMLDivElement>(null);
@@ -256,6 +256,11 @@ export function SiteHeader() {
                     <p className="truncate font-semibold text-ink">{user.name}</p>
                     <p className="mt-1 truncate text-xs text-mute">{user.email}</p>
                     <Link to="/account" onClick={() => setProfileOpen(false)} className="mt-3 block rounded-lg bg-royal px-3 py-2 text-center text-sm font-semibold text-white hover:opacity-90">Manage Account</Link>
+                    {isAdmin && (
+                      <Link to="/admin" onClick={() => setProfileOpen(false)} className="mt-2 block rounded-lg border border-royal/30 bg-royal/5 px-3 py-2 text-center text-sm font-semibold text-royal hover:bg-royal/10">
+                        Admin Dashboard
+                      </Link>
+                    )}
                     <button type="button" onClick={() => { signOut(); setProfileOpen(false); }} className="mt-4 w-full rounded-lg border border-line px-3 py-2 text-left text-sm font-semibold text-ink hover:bg-plate">Sign Out</button>
                   </div>
                 )}
@@ -366,7 +371,16 @@ export function SiteHeader() {
                       <p className="truncate text-xs text-white/55">{user.email}</p>
                     </div>
                   </div>
-                  <div className="mt-3 grid grid-cols-2 gap-2">
+                  <div className={cn("mt-3 grid gap-2", isAdmin ? "grid-cols-2" : "grid-cols-2")}>
+                    {isAdmin && (
+                      <Link
+                        to="/admin"
+                        onClick={() => setMenuOpen(false)}
+                        className="col-span-2 rounded-xl border border-white/20 bg-white/10 px-3 py-2.5 text-center text-xs font-bold text-white hover:bg-white/15"
+                      >
+                        Admin Dashboard
+                      </Link>
+                    )}
                     <Link
                       to="/account"
                       onClick={() => setMenuOpen(false)}
