@@ -490,7 +490,7 @@ export function Modal({
       html.style.overscrollBehavior = previous.overscrollBehavior;
       window.scrollTo(0, scrollY);
     };
-  }, [open, onClose]);
+  }, [open]);
 
   if (!open) return null;
   return (
