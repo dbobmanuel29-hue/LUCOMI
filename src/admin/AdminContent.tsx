@@ -37,7 +37,7 @@ export function AdminProjects() {
     location: "",
     images: [],
     published: true,
-    placeholder: true,
+    placeholder: false,
     createdAt: new Date().toISOString().slice(0, 10),
   };
 
@@ -45,7 +45,7 @@ export function AdminProjects() {
     <>
       <AdminPageHead
         title="Projects"
-        description="Portfolio entries shown on the Projects page. Mark records as sample until completed LUCOMI projects replace them."
+        description="Portfolio entries shown on the Projects page. Manage LUCOMI project portfolio entries and publishing."
         action={
           <Button onClick={() => setEditing(blank)}>
             <Plus className="h-4 w-4" /> Add Project
@@ -72,7 +72,7 @@ export function AdminProjects() {
               <span className={cn("micro", p.published ? "text-royal" : "text-mute")}>
                 {p.published ? "Published" : "Draft"}
               </span>
-              {p.placeholder && <span className="micro ml-2 text-ink">Sample</span>}
+              {}
             </Cell>
             <Cell label="Actions" span={2} className="md:text-right">
               <span className="flex flex-wrap gap-1.5 md:justify-end">
@@ -315,7 +315,7 @@ export function AdminTestimonials() {
                 onChange={(e) => setEditing({ ...editing, placeholder: e.target.checked })}
                 className="h-4 w-4 accent-[#1560E8]"
               />
-              Mark as sample / placeholder content
+              Publish this project on the website
             </label>
             <div className="flex gap-3">
               <Button
