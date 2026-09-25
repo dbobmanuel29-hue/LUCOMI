@@ -246,7 +246,6 @@ export function AdminUsers() {
                         <p className="truncate font-semibold text-ink">{user.name}</p>
                         {user.isAdmin && <span className="micro rounded-full bg-ink px-2 py-1 text-white">Admin</span>}
                       </div>
-                      <p className="truncate text-xs text-mute">{user.uid}</p>
                     </div>
                   </div>
 
