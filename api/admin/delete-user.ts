@@ -1,6 +1,18 @@
 import { cert, getApps, initializeApp } from "firebase-admin/app";
 import { getAuth } from "firebase-admin/auth";
-import { FieldValue, getFirestore } from "firebase-admin/firestore";
+import { FieldValue, getFirestore, type Firestore } from "firebase-admin/firestore";
+
+type ApiRequest = {
+  method?: string;
+  headers: Record<string, string | undefined>;
+  body?: unknown;
+};
+
+type ApiResponse = {
+  setHeader(name: string, value: string): void;
+  status(code: number): ApiResponse;
+  json(payload: unknown): ApiResponse;
+};
 
 function getAdminApp() {
   if (getApps().length) return getApps()[0];
@@ -18,7 +30,7 @@ function getAdminApp() {
   });
 }
 
-async function requireAdmin(request) {
+async function requireAdmin(request: ApiRequest): Promise<{ adminAuth: ReturnType<typeof getAuth>; adminDb: Firestore; callerUid: string }> {
   const header = request.headers.authorization || "";
   if (!header.startsWith("Bearer ")) {
     throw new Error("Missing authorization token.");
@@ -39,7 +51,7 @@ async function requireAdmin(request) {
   return { adminAuth, adminDb, callerUid: decoded.uid };
 }
 
-async function deleteCustomerFirestoreData(adminDb, uid) {
+async function deleteCustomerFirestoreData(adminDb: Firestore, uid: string): Promise<number> {
   let deletedRecords = 0;
 
   for (const collectionName of ["enquiries", "quotes", "testimonials"]) {
@@ -68,7 +80,7 @@ async function deleteCustomerFirestoreData(adminDb, uid) {
   return deletedRecords + 1;
 }
 
-export default async function handler(request, response) {
+export default async function handler(request: ApiRequest, response: ApiResponse) {
   if (request.method !== "POST") {
     response.setHeader("Allow", "POST");
     return response.status(405).json({ error: "Method not allowed." });
