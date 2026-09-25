@@ -482,30 +482,28 @@ export function SiteFooter() {
 
         <div className="md:col-span-3">
           <Micro className="text-white/45">Contact</Micro>
-          <ul className="mt-5 space-y-4 text-sm">
-            <li className="flex gap-3">
-              <MapPin className="mt-0.5 h-4 w-4 shrink-0 text-royal" />
-              <span className="leading-relaxed">{settings.address}</span>
-            </li>
-            {settings.phone.map((p) => (
-              <li key={p} className="flex gap-3">
-                <Phone className="mt-0.5 h-4 w-4 shrink-0 text-royal" />
-                {user ? (
-                  <a href={telHref(p)} className="tnum transition-colors hover:text-white">{displayPhone(p)}</a>
-                ) : (
-                  <button type="button" onClick={openAuth} className="tnum transition-colors hover:text-white">{displayPhone(p)}</button>
-                )}
+          {user ? (
+            <ul className="mt-5 space-y-4 text-sm">
+              <li className="flex gap-3">
+                <MapPin className="mt-0.5 h-4 w-4 shrink-0 text-royal" />
+                <span className="leading-relaxed">{settings.address}</span>
               </li>
-            ))}
-            <li className="flex gap-3">
-              <Mail className="mt-0.5 h-4 w-4 shrink-0 text-royal" />
-              {user ? (
+              {settings.phone.map((p) => (
+                <li key={p} className="flex gap-3">
+                  <Phone className="mt-0.5 h-4 w-4 shrink-0 text-royal" />
+                  <a href={telHref(p)} className="tnum transition-colors hover:text-white">{displayPhone(p)}</a>
+                </li>
+              ))}
+              <li className="flex gap-3">
+                <Mail className="mt-0.5 h-4 w-4 shrink-0 text-royal" />
                 <a href={`mailto:${settings.email}`} className="break-all transition-colors hover:text-white">{settings.email}</a>
-              ) : (
-                <button type="button" onClick={openAuth} className="break-all text-left transition-colors hover:text-white">{settings.email}</button>
-              )}
-            </li>
-          </ul>
+              </li>
+            </ul>
+          ) : (
+            <button type="button" onClick={openAuth} className="mt-5 text-left text-sm leading-relaxed text-white/60 hover:text-white">
+              Sign in to view LUCOMI's contact details →
+            </button>
+          )}
           <div className="mt-6">
             <Micro className="text-white/45">Find us online</Micro>
             <SocialLinks settings={settings} className="mt-3" />
