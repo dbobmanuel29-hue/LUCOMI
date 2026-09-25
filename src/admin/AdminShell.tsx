@@ -27,6 +27,7 @@ import { Button, Field, Input, Micro, Notice, Skeleton } from "../components/ui"
 
 export const ADMIN_NAV = [
   { to: "/admin", label: "Overview", icon: LayoutDashboard, end: true },
+  { to: "/admin/users", label: "Users", icon: Users },
   { to: "/admin/products", label: "Products", icon: Package },
   { to: "/admin/categories", label: "Categories", icon: Tags },
   { to: "/admin/projects", label: "Projects", icon: FolderKanban },
@@ -187,8 +188,8 @@ export function AdminLayout() {
           onClick={() => setOpenMenu(false)}
           className={({ isActive }) =>
             cn(
-              "flex items-center gap-3 rounded-lg px-4 py-3 text-[14px] transition-colors",
-              isActive ? "bg-white/12 text-white" : "text-white/60 hover:bg-white/6 hover:text-white",
+              "group relative flex items-center gap-3 rounded-xl px-4 py-3 text-[14px] transition-all duration-200",
+              isActive ? "bg-white/[0.11] text-white shadow-[inset_3px_0_0_#3fa9f5]" : "text-white/60 hover:bg-white/[0.06] hover:text-white",
             )
           }
         >
@@ -200,8 +201,8 @@ export function AdminLayout() {
   );
 
   return (
-    <div className="min-h-screen bg-paper lg:grid lg:grid-cols-[260px_1fr]">
-      <aside className="hidden bg-ink px-5 py-7 lg:block">
+    <div className="min-h-screen bg-[radial-gradient(circle_at_top_right,rgba(21,96,232,0.08),transparent_32%),#f7f8fa] lg:grid lg:grid-cols-[280px_1fr]">
+      <aside className="hidden bg-[#07152d] px-6 py-7 lg:block">
         <div className="flex h-full flex-col">
           <Logo />
           <div className="mt-9 flex-1">{nav}</div>
@@ -235,7 +236,7 @@ export function AdminLayout() {
           </div>
         </header>
 
-        <main className="flex-1 px-5 py-8 lg:px-10 lg:py-10">
+        <main className="mx-auto w-full max-w-[1500px] flex-1 px-5 py-8 lg:px-10 lg:py-10">
           <Outlet />
         </main>
       </div>
