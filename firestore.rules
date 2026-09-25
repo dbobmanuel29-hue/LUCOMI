@@ -11,23 +11,144 @@ service cloud.firestore {
       return signedIn() && request.auth.uid == uid;
     }
 
-    match /users/{uid} {
-      allow create: if isOwner(uid)
-        && request.resource.data.uid == uid
-        && request.resource.data.email == request.auth.token.email;
-
-      allow read: if isOwner(uid);
-
-      allow update: if isOwner(uid)
-        && request.resource.data.uid == resource.data.uid
-        && request.resource.data.email == resource.data.email
-        && request.resource.data.provider == resource.data.provider;
-
-      allow delete: if false;
+    function isAdmin() {
+      return signedIn()
+        && exists(/databases/$(database)/documents/admins/$(request.auth.uid))
+        && get(/databases/$(database)/documents/admins/$(request.auth.uid)).data.role == "admin";
     }
 
-    // All other collections remain locked until their backend rules
-    // are added in their respective implementation phases.
+    function activeUser(uid) {
+      return isOwner(uid)
+        && (
+          !exists(/databases/$(database)/documents/users/$(uid))
+          || get(/databases/$(database)/documents/users/$(uid)).data.get("retentionUntil", null) == null
+          || get(/databases/$(database)/documents/users/$(uid)).data.retentionUntil > request.time
+        );
+    }
+
+    // Admin records are provisioned manually by the project owner in Firebase Console.
+    // Clients can never create, edit, or delete their own admin role.
+    match /admins/{uid} {
+      allow read: if isOwner(uid);
+      allow write: if false;
+    }
+
+    // Customer profile. Admins are excluded from the one-year retention expiry.
+    match /users/{uid} {
+      allow read: if isAdmin() || isOwner(uid);
+
+      allow create: if isOwner(uid)
+        && request.resource.data.uid == uid
+        && request.resource.data.email == request.auth.token.email
+        && request.resource.data.provider in ["email", "google"]
+        && request.resource.data.keys().hasOnly([
+          "uid", "name", "email", "phone", "photoURL", "provider",
+          "createdAt", "retentionUntil", "updatedAt"
+        ]);
+
+      allow update: if isAdmin()
+        || (
+          isOwner(uid)
+          && request.resource.data.uid == resource.data.uid
+          && request.resource.data.email == resource.data.email
+          && request.resource.data.provider == resource.data.provider
+          && request.resource.data.createdAt == resource.data.createdAt
+          && request.resource.data.retentionUntil == resource.data.retentionUntil
+          && request.resource.data.diff(resource.data).affectedKeys().hasOnly([
+            "name", "phone", "photoURL", "updatedAt"
+          ])
+        );
+
+      allow delete: if isAdmin() || isOwner(uid);
+    }
+
+    // Public catalogue.
+    match /categories/{id} {
+      allow read: if isAdmin() || resource.data.published == true;
+      allow write: if isAdmin();
+    }
+
+    match /products/{id} {
+      allow read: if isAdmin() || resource.data.published == true;
+      allow write: if isAdmin();
+    }
+
+    match /projects/{id} {
+      allow read: if isAdmin() || resource.data.published == true;
+      allow write: if isAdmin();
+    }
+
+    match /team/{id} {
+      allow read: if isAdmin() || resource.data.published == true || resource.data.get("published", true) == true;
+      allow write: if isAdmin();
+    }
+
+    match /testimonials/{id} {
+      allow read: if isAdmin()
+        || resource.data.published == true
+        || (signedIn() && resource.data.get("userId", "") == request.auth.uid);
+
+      allow create: if isAdmin()
+        || (
+          signedIn()
+          && request.resource.data.userId == request.auth.uid
+          && activeUser(request.auth.uid)
+          && request.resource.data.published == false
+        );
+
+      allow update: if isAdmin();
+
+      allow delete: if isAdmin()
+        || (signedIn() && resource.data.get("userId", "") == request.auth.uid);
+    }
+
+    // Customer enquiries / contact requests / quote requests / custom requests.
+    match /enquiries/{id} {
+      allow read: if isAdmin()
+        || (signedIn() && resource.data.get("userId", "") == request.auth.uid);
+
+      allow create: if isAdmin()
+        || (
+          signedIn()
+          && request.resource.data.userId == request.auth.uid
+          && activeUser(request.auth.uid)
+        );
+
+      allow update: if isAdmin();
+
+      allow delete: if isAdmin()
+        || (signedIn() && resource.data.get("userId", "") == request.auth.uid);
+    }
+
+    // Future quote-specific collection if the catalogue grows into a separate quote workflow.
+    match /quotes/{id} {
+      allow read: if isAdmin()
+        || (signedIn() && resource.data.get("userId", "") == request.auth.uid);
+
+      allow create: if isAdmin()
+        || (
+          signedIn()
+          && request.resource.data.userId == request.auth.uid
+          && activeUser(request.auth.uid)
+        );
+
+      allow update: if isAdmin();
+      allow delete: if isAdmin()
+        || (signedIn() && resource.data.get("userId", "") == request.auth.uid);
+    }
+
+    // Public business configuration. Only admins may change it.
+    match /settings/{id} {
+      allow read: if isAdmin() || id == "business";
+      allow write: if isAdmin();
+    }
+
+    // Audit logs are private to admins.
+    match /auditLogs/{id} {
+      allow read, write: if isAdmin();
+    }
+
+    // Deny everything not explicitly listed above.
     match /{document=**} {
       allow read, write: if false;
     }
