@@ -29,6 +29,7 @@ type AuthContextValue = {
   open: () => void;
   user: AuthUser | null;
   isAdmin: boolean;
+  authReady: boolean;
   updateUser: (changes: Partial<AuthUser>) => Promise<void>;
   signOut: () => Promise<void>;
   openSignIn: () => void;
@@ -37,6 +38,8 @@ type AuthContextValue = {
 const AuthContext = createContext<AuthContextValue>({
   open: () => {},
   user: null,
+  isAdmin: false,
+  authReady: false,
   updateUser: async () => {},
   signOut: async () => {},
   openSignIn: () => {},
@@ -89,6 +92,7 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
   const [open, setOpen] = useState(false);
   const [user, setUser] = useState<AuthUser | null>(null);
   const [isAdmin, setIsAdmin] = useState(false);
+  const [authReady, setAuthReady] = useState(false);
 
   const ensureUserProfile = async (firebaseUser: FirebaseUser) => {
     const ref = doc(db, "users", firebaseUser.uid);
@@ -138,6 +142,7 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
   useEffect(() => {
     let heartbeat: number | undefined;
     const unsubscribe = onAuthStateChanged(auth, (firebaseUser) => {
+      setAuthReady(true);
       setUser(firebaseUser ? mapFirebaseUser(firebaseUser) : null);
       setIsAdmin(false);
 
@@ -206,7 +211,7 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
   };
 
   return (
-    <AuthContext.Provider value={{ open: () => setOpen(true), openSignIn: () => { setOpen(true); }, user, isAdmin, updateUser, signOut }}>
+    <AuthContext.Provider value={{ open: () => setOpen(true), openSignIn: () => { setOpen(true); }, user, isAdmin, authReady, updateUser, signOut }}>
       {children}
       <AuthModal open={open} onClose={() => setOpen(false)} onAuthenticated={setUser} />
     </AuthContext.Provider>
