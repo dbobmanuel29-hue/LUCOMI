@@ -236,7 +236,7 @@ export function AdminUsers() {
             {filtered.map((user) => {
               const online = isOnline(user);
               return (
-                <div key={user.uid} className="grid gap-4 p-5 md:grid-cols-[1.6fr_1.5fr_1fr_auto] md:items-center">
+                <div key={user.uid} className="grid gap-5 p-5 lg:grid-cols-[minmax(260px,1.4fr)_minmax(220px,1.15fr)_minmax(170px,.9fr)_auto] lg:items-center">
                   <div className="flex min-w-0 items-center gap-3">
                     <div className="flex h-11 w-11 shrink-0 items-center justify-center overflow-hidden rounded-full bg-ink text-sm font-semibold text-white">
                       {user.name.slice(0, 1).toUpperCase()}
@@ -286,10 +286,8 @@ export function AdminUsers() {
       </section>
 
       <div className="mt-5 rounded-xl border border-line/70 bg-plate p-4 text-xs leading-relaxed text-mute">
-        <strong className="text-ink">Account management note:</strong> This dashboard manages the Firestore customer profile and activity record directly. Full deletion of a Firebase Authentication account requires the Firebase Admin SDK on a trusted server; the client SDK intentionally cannot delete another user's account. 
-      </div>
-
-      <Modal open={openCreate} onClose={() => setOpenCreate(false)} title="Add customer account">
+        <strong className="text-ink">Account management:</strong> Customer profiles, activity and account access are managed from this dashboard.
+      </div>      <Modal open={openCreate} onClose={() => setOpenCreate(false)} title="Add customer account">
         <div className="space-y-4">
           <Notice tone="info" title="Email/password account">
             This creates a real Firebase Authentication account and a matching LUCOMI customer profile. Give the customer their temporary password securely.
