@@ -164,9 +164,35 @@ export function SiteHeader() {
   };
 
   useEffect(() => {
-    document.body.style.overflow = menuOpen ? "hidden" : "";
+    if (!menuOpen) return;
+
+    // Lock the document itself while the mobile/tablet drawer is open.
+    // Using position: fixed as well as overflow:hidden prevents iOS/Android
+    // browsers from rubber-banding the page underneath the drawer.
+    const scrollY = window.scrollY;
+    const body = document.body;
+    const html = document.documentElement;
+    const previous = {
+      overflow: body.style.overflow,
+      position: body.style.position,
+      top: body.style.top,
+      width: body.style.width,
+      overscrollBehavior: html.style.overscrollBehavior,
+    };
+
+    body.style.overflow = "hidden";
+    body.style.position = "fixed";
+    body.style.top = `-${scrollY}px`;
+    body.style.width = "100%";
+    html.style.overscrollBehavior = "none";
+
     return () => {
-      document.body.style.overflow = "";
+      body.style.overflow = previous.overflow;
+      body.style.position = previous.position;
+      body.style.top = previous.top;
+      body.style.width = previous.width;
+      html.style.overscrollBehavior = previous.overscrollBehavior;
+      window.scrollTo(0, scrollY);
     };
   }, [menuOpen]);
 
@@ -302,7 +328,7 @@ export function SiteHeader() {
             animate={{ opacity: 1 }}
             exit={{ opacity: 0 }}
             transition={{ duration: 0.25 }}
-            className="fixed inset-0 z-[90] flex h-dvh flex-col overflow-hidden bg-ink text-white xl:hidden"
+            className="fixed inset-0 z-[90] flex h-dvh flex-col overscroll-none overflow-hidden bg-ink text-white xl:hidden"
           >
             <div className="shell flex h-[68px] shrink-0 items-center justify-between gap-3 sm:h-[72px] sm:gap-4">
               <Link to="/" className="flex shrink-0 items-center gap-3" aria-label="LUCOMI ENTERPRISE — home">
@@ -335,7 +361,7 @@ export function SiteHeader() {
               </div>
             </div>
             <nav
-              className="shell no-scrollbar mt-5 flex min-h-0 flex-1 flex-col overflow-y-auto overscroll-contain pb-2"
+              className="shell no-scrollbar mt-5 flex min-h-0 flex-1 flex-col overflow-y-auto overscroll-contain overscroll-y-contain pb-2 [touch-action:pan-y]"
               aria-label="Mobile"
             >
               {NAV.map((item, i) => (
