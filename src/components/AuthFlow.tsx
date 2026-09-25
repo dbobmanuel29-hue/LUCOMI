@@ -1,7 +1,8 @@
 import { createContext, useContext, useEffect, useState } from "react";
 import { Eye, EyeOff, LockKeyhole, Mail, User } from "lucide-react";
 import { Button, Field, Input, Modal, Notice } from "./ui";
-import { auth } from "../lib/firebase";
+import { auth, db } from "../lib/firebase";
+import { doc, serverTimestamp, setDoc } from "firebase/firestore";
 import {
   GoogleAuthProvider,
   User as FirebaseUser,
@@ -27,14 +28,14 @@ export type AuthUser = {
 type AuthContextValue = {
   open: () => void;
   user: AuthUser | null;
-  updateUser: (changes: Partial<AuthUser>) => void;
+  updateUser: (changes: Partial<AuthUser>) => Promise<void>;
   signOut: () => Promise<void>;
 };
 
 const AuthContext = createContext<AuthContextValue>({
   open: () => {},
   user: null,
-  updateUser: () => {},
+  updateUser: async () => {},
   signOut: async () => {},
 });
 
@@ -89,8 +90,36 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
     setUser(firebaseUser ? mapFirebaseUser(firebaseUser) : null);
   }), []);
 
-  const updateUser = (changes: Partial<AuthUser>) => {
-    setUser((current) => current ? { ...current, ...changes } : current);
+  const updateUser = async (changes: Partial<AuthUser>) => {
+    if (!auth.currentUser) throw new Error("You must be signed in to update your profile.");
+
+    const current = auth.currentUser;
+    const nextName = changes.name?.trim() || current.displayName || current.email?.split("@")[0] || "LUCOMI User";
+    const nextPhone = changes.phone?.trim() || "";
+
+    if (changes.name !== undefined && changes.name.trim() && changes.name.trim() !== current.displayName) {
+      await updateProfile(current, { displayName: changes.name.trim() });
+    }
+
+    // Keep profile data in Firestore. Profile images will move to Cloudinary
+    // in the media phase; do not store large device Data URLs in Firestore.
+    await setDoc(doc(db, "users", current.uid), {
+      uid: current.uid,
+      name: nextName,
+      email: current.email || "",
+      phone: nextPhone,
+      photoURL: changes.photoURL && !changes.photoURL.startsWith("data:") ? changes.photoURL : (current.photoURL || ""),
+      provider: current.providerData.some((item) => item.providerId === "google.com") ? "google" : "email",
+      updatedAt: serverTimestamp(),
+    }, { merge: true });
+
+    setUser((existing) => existing ? {
+      ...existing,
+      ...changes,
+      name: nextName,
+      phone: nextPhone || undefined,
+      photoURL: changes.photoURL && !changes.photoURL.startsWith("data:") ? changes.photoURL : existing.photoURL,
+    } : existing);
   };
 
   const signOut = async () => {
