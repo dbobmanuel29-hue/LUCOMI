@@ -216,7 +216,7 @@ function AuthModal({
     }
 
     const today = new Date().toISOString().slice(0, 10);
-    const storageKey = "lucomi-password-reset-limit";
+    const storageKey = `lucomi-password-reset-limit:${normalized}`;
     let record: { date: string; count: number } = { date: today, count: 0 };
     try {
       const raw = localStorage.getItem(storageKey);
