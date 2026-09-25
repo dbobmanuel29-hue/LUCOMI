@@ -113,12 +113,21 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
         retentionUntil: isAdmin ? null : retentionUntil,
         updatedAt: serverTimestamp(),
       });
-    } else if (!snapshot.data()?.createdAt) {
-      await setDoc(ref, {
-        createdAt,
-        retentionUntil: isAdmin ? null : retentionUntil,
+    } else {
+      const patch: Record<string, unknown> = {
+        lastLoginAt: firebaseUser.metadata.lastSignInTime
+          ? Timestamp.fromDate(new Date(firebaseUser.metadata.lastSignInTime))
+          : serverTimestamp(),
+        lastSeenAt: serverTimestamp(),
         updatedAt: serverTimestamp(),
-      }, { merge: true });
+      };
+
+      if (!snapshot.data()?.createdAt) {
+        patch.createdAt = createdAt;
+        patch.retentionUntil = isAdmin ? null : retentionUntil;
+      }
+
+      await setDoc(ref, patch, { merge: true });
     }
   };
 
@@ -132,6 +141,13 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
           // Profile persistence errors should not block authentication.
         });
 
+        const heartbeat = window.setInterval(() => {
+          void setDoc(doc(db, "users", firebaseUser.uid), {
+            lastSeenAt: serverTimestamp(),
+            updatedAt: serverTimestamp(),
+          }, { merge: true }).catch(() => {});
+        }, 60_000);
+
         void getDoc(doc(db, "admins", firebaseUser.uid))
           .then((snapshot) => {
             setIsAdmin(snapshot.exists() && snapshot.data()?.role === "admin");
@@ -140,6 +156,7 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
             setIsAdmin(false);
           });
       }
+      return () => window.clearInterval(heartbeat);
     });
   }, []);
 
