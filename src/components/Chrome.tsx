@@ -386,7 +386,17 @@ export function SiteHeader() {
               ) : (
                 <Button full size="lg" variant="light" onClick={() => { setMenuOpen(false); openAuth(); }}>Get Started</Button>
               )}
-              <Button full size="lg" href={waLink("Hello LUCOMI ENTERPRISE, I would like to make an enquiry.")}>
+              <Button
+                full
+                size="lg"
+                onClick={() => {
+                  if (!user) {
+                    openAuth();
+                    return;
+                  }
+                  window.open(waLink("Hello LUCOMI ENTERPRISE, I would like to make an enquiry."), "_blank", "noopener,noreferrer");
+                }}
+              >
                 <WhatsAppIcon className="h-4 w-4" /> WhatsApp Us
               </Button>
             </div>
@@ -402,6 +412,7 @@ export function SiteHeader() {
 export function SiteFooter() {
   const settings = useSettings();
   const { open } = useQuote();
+  const { user, open: openAuth } = useAuth();
 
   return (
     <footer className="bg-ink-deep text-white/75">
@@ -423,9 +434,13 @@ export function SiteFooter() {
             </Button>
             <Button
               size="sm"
-              href={waLink("Hello LUCOMI ENTERPRISE, I would like to make an enquiry.")}
-              target="_blank"
-              rel="noopener noreferrer"
+              onClick={() => {
+                if (!user) {
+                  openAuth();
+                  return;
+                }
+                window.open(waLink("Hello LUCOMI ENTERPRISE, I would like to make an enquiry."), "_blank", "noopener,noreferrer");
+              }}
             >
               <WhatsAppIcon className="h-4 w-4" /> WhatsApp
             </Button>
@@ -475,16 +490,20 @@ export function SiteFooter() {
             {settings.phone.map((p) => (
               <li key={p} className="flex gap-3">
                 <Phone className="mt-0.5 h-4 w-4 shrink-0 text-royal" />
-                <a href={telHref(p)} className="tnum transition-colors hover:text-white">
-                  {displayPhone(p)}
-                </a>
+                {user ? (
+                  <a href={telHref(p)} className="tnum transition-colors hover:text-white">{displayPhone(p)}</a>
+                ) : (
+                  <button type="button" onClick={openAuth} className="tnum transition-colors hover:text-white">{displayPhone(p)}</button>
+                )}
               </li>
             ))}
             <li className="flex gap-3">
               <Mail className="mt-0.5 h-4 w-4 shrink-0 text-royal" />
-              <a href={`mailto:${settings.email}`} className="break-all transition-colors hover:text-white">
-                {settings.email}
-              </a>
+              {user ? (
+                <a href={`mailto:${settings.email}`} className="break-all transition-colors hover:text-white">{settings.email}</a>
+              ) : (
+                <button type="button" onClick={openAuth} className="break-all text-left transition-colors hover:text-white">{settings.email}</button>
+              )}
             </li>
           </ul>
           <div className="mt-6">
@@ -514,11 +533,17 @@ export function SiteFooter() {
 
 /* --------------------------- floating whatsapp ------------------------- */
 export function FloatingWhatsApp() {
+  const { user, open: openAuth } = useAuth();
   return (
-    <a
-      href={waLink("Hello LUCOMI ENTERPRISE, I would like to make an enquiry.")}
-      target="_blank"
-      rel="noopener noreferrer"
+    <button
+      type="button"
+      onClick={() => {
+        if (!user) {
+          openAuth();
+          return;
+        }
+        window.open(waLink("Hello LUCOMI ENTERPRISE, I would like to make an enquiry."), "_blank", "noopener,noreferrer");
+      }}
       aria-label="Chat with LUCOMI ENTERPRISE on WhatsApp"
       className="group fixed bottom-8 right-8 z-[55] hidden h-14 w-14 items-center justify-center rounded-full bg-[#25D366] text-white shadow-[0_12px_30px_-10px_rgba(37,211,102,0.8)] transition-transform duration-200 hover:scale-105 lg:flex"
     >
@@ -526,13 +551,14 @@ export function FloatingWhatsApp() {
       <span className="pointer-events-none absolute right-[60px] hidden whitespace-nowrap rounded-full bg-ink px-4 py-2 text-[11.5px] font-semibold uppercase tracking-[0.08em] text-white opacity-0 transition-opacity duration-200 group-hover:opacity-100 lg:block">
         Chat with us
       </span>
-    </a>
+    </button>
   );
 }
 
 /* --------------------------- mobile sticky CTA ------------------------- */
 export function MobileCTABar() {
   const { open } = useQuote();
+  const { user, open: openAuth } = useAuth();
   return (
     <div className="safe-bottom fixed inset-x-0 bottom-0 z-[60] grid grid-cols-2 gap-px border-t border-line bg-line lg:hidden">
       <button
@@ -541,14 +567,19 @@ export function MobileCTABar() {
       >
         Request Quote
       </button>
-      <a
-        href={waLink("Hello LUCOMI ENTERPRISE, I would like to make an enquiry.")}
-        target="_blank"
-        rel="noopener noreferrer"
+      <button
+        type="button"
+        onClick={() => {
+          if (!user) {
+            openAuth();
+            return;
+          }
+          window.open(waLink("Hello LUCOMI ENTERPRISE, I would like to make an enquiry."), "_blank", "noopener,noreferrer");
+        }}
         className="flex items-center justify-center gap-2 bg-royal py-4 text-[11.5px] font-semibold uppercase tracking-[0.08em] text-white"
       >
         <WhatsAppIcon className="h-4 w-4" /> WhatsApp
-      </a>
+      </button>
     </div>
   );
 }
