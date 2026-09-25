@@ -1,6 +1,6 @@
 import { useState } from "react";
 import { Pencil, Plus, Star, Trash2 } from "lucide-react";
-import { api, seedCatalogue, useAsync } from "../lib/api";
+import { api, useAsync } from "../lib/api";
 import { cn, formatDate, priceLabel } from "../lib/helpers";
 import type { Category, Product } from "../lib/types";
 import { ImageUpload } from "../components/ImageUpload";
@@ -35,7 +35,6 @@ export function AdminProducts() {
   const [saving, setSaving] = useState(false);
   const [notice, setNotice] = useState<string | null>(null);
   const [confirm, setConfirm] = useState<Product | null>(null);
-  const [seeding, setSeeding] = useState(false);
   const firstCategory = (categories.data ?? [])[0]?.slug ?? "executive-desks";
 
   const save = async () => {
@@ -56,31 +55,9 @@ export function AdminProducts() {
         title="Products"
         description="Add, edit and publish catalogue products. Manage product details, publishing and catalogue media."
         action={
-          <div className="flex flex-wrap gap-2">
-            <Button
-              variant="outline"
-              disabled={seeding}
-              onClick={async () => {
-                setSeeding(true);
-                setNotice(null);
-                try {
-                  const result = await seedCatalogue();
-                  setNotice(`Firebase catalogue initialized with ${result.products} products and ${result.categories} categories.`);
-                  reload();
-                  categories.reload();
-                } catch (error) {
-                  setNotice(error instanceof Error ? error.message : "The Firebase catalogue could not be initialized.");
-                } finally {
-                  setSeeding(false);
-                }
-              }}
-            >
-              {seeding ? "Initializing…" : "Initialize Firebase Catalogue"}
-            </Button>
-            <Button onClick={() => setEditing(blank(firstCategory))}>
-              <Plus className="h-4 w-4" /> Add Product
-            </Button>
-          </div>
+          <Button onClick={() => setEditing(blank(firstCategory))}>
+            <Plus className="h-4 w-4" /> Add Product
+          </Button>
         }
       />
 
