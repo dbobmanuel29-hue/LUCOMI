@@ -138,3 +138,12 @@ settings/business
 
 ## Production note
 The Terms & Conditions and Privacy Policy pages are included in the frontend now. Their final legal wording — especially liability, cancellation/refund, warranty and data-retention language — should be reviewed against LUCOMI's actual business practices and applicable Nigerian requirements before final production use.
+
+## Account security and retention additions — September 2026
+
+- Admin access is controlled by `admins/{uid}` with `role: "admin"`. Client applications cannot create or edit admin records; the project owner provisions the admin document manually in Firebase Console.
+- Customer contact actions require Firebase Authentication. Public browsing and social links remain available without an account.
+- Password reset requests are limited in the frontend to 2 requests per calendar day per email address. Users are told to check Spam/Junk when a reset message is not visible. A server-enforced 2/day limit would require a privileged backend because Firebase's client password-reset API is not a Firestore-rule-controlled operation.
+- Customer profiles record first-signup `createdAt` and a one-year `retentionUntil` timestamp. Admin profiles are excluded.
+- Customer history documents carry `userId` so the user's enquiries, quotes and reviews can be scoped to that account.
+- True unattended one-year deletion requires a scheduled/server-side mechanism. Firebase currently requires the Blaze plan for Cloud Functions, and Firestore TTL deletes are not included in the no-cost Spark quota. Until that is enabled, the app records the retention deadline and applies retention controls when the account is active; the production plan should enable TTL/server cleanup before making the deletion fully unattended.
