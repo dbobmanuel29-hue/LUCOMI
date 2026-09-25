@@ -218,7 +218,7 @@ export function AdminProducts() {
               />
             </Field>
 
-            <ImageUpload value={editing.images} onChange={(urls) => patch({ images: urls })} label="Product Images" />
+            <ImageUpload value={editing.images} onChange={(urls) => patch({ images: urls })} folder="lucomi/products" label="Product Images" />
 
             <div className="flex flex-wrap gap-4 rounded-lg bg-plate px-5 py-4">
               <label className="flex items-center gap-2 text-[14px]">
@@ -362,7 +362,7 @@ export function AdminCategories() {
             <Field label="Description">
               <Textarea value={editing.description} onChange={(e) => setEditing({ ...editing, description: e.target.value })} />
             </Field>
-            <ImageUpload value={editing.image ? [editing.image] : []} onChange={(urls) => setEditing({ ...editing, image: urls[0] ?? "" })} max={1} label="Category Image" />
+            <ImageUpload value={editing.image ? [editing.image] : []} onChange={(urls) => setEditing({ ...editing, image: urls[0] ?? "" })} folder="lucomi/categories" max={1} label="Category Image" />
             <div className="flex gap-3">
               <Button
                 size="lg"
