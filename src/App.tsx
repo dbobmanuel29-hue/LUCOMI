@@ -79,25 +79,17 @@ export default function App() {
   const [ready, setReady] = useState(false);
 
   useEffect(() => {
-    const startedAt = performance.now();
+    // Keep the branded intro loader visible for exactly 3 seconds,
+    // but never depend on the window "load" event. A slow/broken image,
+    // favicon, or third-party resource must not leave the app stuck.
+    const timer = window.setTimeout(() => {
+      setReady(true);
+      requestAnimationFrame(() => {
+        document.getElementById("initial-loader")?.remove();
+      });
+    }, 3000);
 
-    const finish = () => {
-      const elapsed = performance.now() - startedAt;
-      const remaining = Math.max(0, 3000 - elapsed);
-
-      window.setTimeout(() => {
-        setReady(true);
-        requestAnimationFrame(() => document.getElementById("initial-loader")?.remove());
-      }, remaining);
-    };
-
-    if (document.readyState === "complete") {
-      finish();
-      return;
-    }
-
-    window.addEventListener("load", finish, { once: true });
-    return () => window.removeEventListener("load", finish);
+    return () => window.clearTimeout(timer);
   }, []);
 
   if (!ready) return null;
