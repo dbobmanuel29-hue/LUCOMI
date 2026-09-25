@@ -52,11 +52,19 @@ service cloud.firestore {
           && request.resource.data.uid == resource.data.uid
           && request.resource.data.email == resource.data.email
           && request.resource.data.provider == resource.data.provider
-          && request.resource.data.createdAt == resource.data.createdAt
-          && request.resource.data.retentionUntil == resource.data.retentionUntil
-          && request.resource.data.diff(resource.data).affectedKeys().hasOnly([
-            "name", "phone", "photoURL", "updatedAt"
-          ])
+          && (
+            request.resource.data.diff(resource.data).affectedKeys().hasOnly([
+              "name", "phone", "photoURL", "updatedAt"
+            ])
+            || (
+              !resource.data.keys().hasAny(["createdAt", "retentionUntil"])
+              && request.resource.data.createdAt is timestamp
+              && request.resource.data.retentionUntil is timestamp
+              && request.resource.data.diff(resource.data).affectedKeys().hasOnly([
+                "name", "phone", "photoURL", "createdAt", "retentionUntil", "updatedAt"
+              ])
+            )
+          )
         );
 
       allow delete: if isAdmin() || isOwner(uid);
