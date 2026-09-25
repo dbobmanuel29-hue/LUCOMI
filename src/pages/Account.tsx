@@ -13,6 +13,7 @@ export default function Account() {
   const [currentPassword, setCurrentPassword] = useState("");
   const [newPassword, setNewPassword] = useState("");
   const [message, setMessage] = useState("");
+  const [saving, setSaving] = useState(false);
   const [imageError, setImageError] = useState("");
   const fileInputRef = useRef<HTMLInputElement>(null);
 
@@ -49,14 +50,24 @@ export default function Account() {
     setMessage("Profile image removed. Tap Save Profile to confirm.");
   };
 
-  const saveProfile = (event: React.FormEvent) => {
+  const saveProfile = async (event: React.FormEvent) => {
     event.preventDefault();
-    updateUser({
-      name: name.trim() || user.name,
-      phone: phone.trim() || undefined,
-      photoURL: photoURL || undefined,
-    });
-    setMessage("Profile details saved.");
+    setSaving(true);
+    setMessage("");
+
+    try {
+      await updateUser({
+        name: name.trim() || user.name,
+        phone: phone.trim() || undefined,
+        photoURL: photoURL || undefined,
+      });
+      setMessage("Profile details saved successfully.");
+    } catch (error) {
+      console.error("Profile save failed:", error);
+      setMessage("We couldn't save your profile. Please try again.");
+    } finally {
+      setSaving(false);
+    }
   };
 
   const changePassword = (event: React.FormEvent) => {
@@ -163,7 +174,7 @@ export default function Account() {
                     </div>
                   </Field>
 
-                  <Button type="submit"><Save className="h-4 w-4" /> Save Profile</Button>
+                  <Button type="submit" disabled={saving}><Save className="h-4 w-4" /> {saving ? "Saving..." : "Save Profile"}</Button>
                 </div>
               </form>
             </Reveal>
