@@ -4,6 +4,7 @@ import { api } from "../lib/api";
 import { cn, quoteMessage, waLink } from "../lib/helpers";
 import type { Enquiry, EnquirySource } from "../lib/types";
 import { Button, Field, Input, Modal, Notice, RadioRow, Select, Textarea } from "./ui";
+import { useAuth } from "./AuthFlow";
 
 type QuoteContextValue = {
   open: (subject?: string, source?: EnquirySource) => void;
@@ -24,6 +25,7 @@ const emptyForm = {
 };
 
 export function QuoteProvider({ children }: { children: React.ReactNode }) {
+  const { user, open: openAuth } = useAuth();
   const [state, setState] = useState<{
     open: boolean;
     subject: string;
@@ -31,8 +33,12 @@ export function QuoteProvider({ children }: { children: React.ReactNode }) {
   }>({ open: false, subject: "", source: "Quote Request" });
 
   const open = useCallback((subject = "", source: EnquirySource = "Quote Request") => {
+    if (!user) {
+      openAuth();
+      return;
+    }
     setState({ open: true, subject, source });
-  }, []);
+  }, [user, openAuth]);
 
   const value = useMemo(() => ({ open }), [open]);
 
@@ -60,6 +66,7 @@ function QuoteModal({
   source: EnquirySource;
   onClose: () => void;
 }) {
+  const { user } = useAuth();
   const [form, setForm] = useState(emptyForm);
   const [status, setStatus] = useState<"idle" | "saving" | "success" | "error">("idle");
   const set = (k: keyof typeof emptyForm) => (v: string) => setForm((f) => ({ ...f, [k]: v }));
@@ -70,6 +77,7 @@ function QuoteModal({
     const enquiry: Enquiry = {
       id: `e${Date.now()}`,
       ...form,
+      userId: user?.uid,
       furnitureType: form.furnitureType || subject || "General Enquiry",
       source,
       status: "New",
@@ -99,7 +107,11 @@ function QuoteModal({
       }}
       title={status === "success" ? "Request Received" : "Request a Quote"}
     >
-      {status === "success" ? (
+      {!user ? (
+        <Notice title="Sign in required">
+          Please sign in or create a LUCOMI account before sending a quotation or enquiry. You can browse the website without an account, but contact requests require a signed-in account.
+        </Notice>
+      ) : status === "success" ? (
         <div className="space-y-5">
           <Notice title="Thank you">
             Your request has been received. A LUCOMI representative will contact you shortly.
@@ -207,9 +219,17 @@ export function WhatsAppLink({
   children?: React.ReactNode;
   className?: string;
 }) {
+  const { user, open: openAuth } = useAuth();
   return (
-    <a
-      href={waLink(message)}
+    <button
+      type="button"
+      onClick={() => {
+        if (!user) {
+          openAuth();
+          return;
+        }
+        window.open(waLink(message), "_blank", "noopener,noreferrer");
+      }}
       target="_blank"
       rel="noopener noreferrer"
       className={cn(
@@ -219,7 +239,7 @@ export function WhatsAppLink({
     >
       <WhatsAppIcon className="h-4 w-4" />
       {children ?? "WhatsApp Us"}
-    </a>
+    </button>
   );
 }
 
