@@ -18,6 +18,7 @@ import Account from "./pages/Account";
 import { Privacy, Terms } from "./pages/Legal";
 import { AdminLayout, AdminLogin, Dashboard } from "./admin/AdminShell";
 import { AdminCategories, AdminProducts } from "./admin/AdminCatalog";
+import { AdminUsers } from "./admin/AdminUsers";
 import { AdminEnquiries, AdminProjects, AdminSettings, AdminTeam, AdminTestimonials } from "./admin/AdminContent";
 
 function ScrollToTop() {
@@ -119,6 +120,7 @@ export default function App() {
           <Route path="/admin/login" element={<AdminLogin />} />
           <Route path="/admin" element={<AdminLayout />}>
             <Route index element={<Dashboard />} />
+            <Route path="users" element={<AdminUsers />} />
             <Route path="products" element={<AdminProducts />} />
             <Route path="categories" element={<AdminCategories />} />
             <Route path="projects" element={<AdminProjects />} />
