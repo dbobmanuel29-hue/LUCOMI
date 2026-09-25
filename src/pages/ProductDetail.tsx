@@ -6,7 +6,7 @@ import { api, useAsync } from "../lib/api";
 import { priceLabel, productEnquiryMessage, waLink } from "../lib/helpers";
 import { Gallery } from "../components/Gallery";
 import { ProductCard } from "../components/ProductCard";
-import { useQuote } from "../components/QuoteFlow";
+import { useQuote, WhatsAppLink } from "../components/QuoteFlow";
 import { Button, EmptyState, ErrorState, Micro, Reveal, SectionHead, Skeleton } from "../components/ui";
 
 export default function ProductDetail() {
@@ -94,9 +94,9 @@ export default function ProductDetail() {
                 <Button size="lg" onClick={() => open(p.name, "Quote Request")}>
                   Request a Quote
                 </Button>
-                <Button size="lg" variant="outline" href={waLink(message)} target="_blank" rel="noopener noreferrer">
-                  <WhatsAppIcon className="h-4 w-4" /> WhatsApp Us
-                </Button>
+                <WhatsAppLink message={message} className="min-h-12 rounded-xl px-5">
+                  WhatsApp Us
+                </WhatsAppLink>
               </div>
 
               <div className="mt-8 rounded-xl border border-line/70 bg-white p-6">
@@ -153,9 +153,9 @@ export default function ProductDetail() {
               <Button variant="ink" onClick={() => open(p.name, "Product Enquiry")}>
                 <Send className="h-4 w-4" /> Send a Product Enquiry
               </Button>
-              <Button variant="outline" href={waLink(message)} target="_blank" rel="noopener noreferrer">
-                <WhatsAppIcon className="h-4 w-4" /> Chat on WhatsApp
-              </Button>
+              <WhatsAppLink message={message} className="min-h-12 rounded-xl px-5">
+                Chat on WhatsApp
+              </WhatsAppLink>
             </div>
           </div>
         </Reveal>
