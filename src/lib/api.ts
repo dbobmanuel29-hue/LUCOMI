@@ -28,110 +28,93 @@ let enquiryStore: Enquiry[] = [...mock.enquiries];
 let teamStore: TeamMember[] = [...mock.team];
 let settingsStore: BusinessSettings = { ...mock.businessSettings };
 
+import { collection, deleteDoc, doc, getDoc, getDocs, query, setDoc, where } from "firebase/firestore";
+import { auth, db } from "./firebase";
+
+function asString(value: unknown, fallback = ""): string {
+  return typeof value === "string" ? value : fallback;
+}
+
+function asStringArray(value: unknown): string[] {
+  return Array.isArray(value) ? value.filter((item): item is string => typeof item === "string") : [];
+}
+
+function productFromDoc(id: string, data: Record<string, unknown>): Product {
+  return {
+    id, slug: asString(data.slug), name: asString(data.name), category: asString(data.category),
+    shortDescription: asString(data.shortDescription), description: asString(data.description),
+    price: asString(data.price),
+    priceVisibility: data.priceVisibility === "visible" || data.priceVisibility === "contact" ? data.priceVisibility : "on-request",
+    images: asStringArray(data.images), features: asStringArray(data.features),
+    materials: asString(data.materials), dimensions: asString(data.dimensions),
+    variations: asStringArray(data.variations), featured: data.featured === true, published: data.published === true,
+    createdAt: asString(data.createdAt, new Date().toISOString().slice(0, 10)),
+    updatedAt: asString(data.updatedAt, asString(data.createdAt, new Date().toISOString().slice(0, 10))),
+  };
+}
+
+function categoryFromDoc(id: string, data: Record<string, unknown>): Category {
+  return { id, name: asString(data.name), slug: asString(data.slug), description: asString(data.description), image: asString(data.image), published: data.published === true, createdAt: asString(data.createdAt, new Date().toISOString().slice(0, 10)) };
+}
+
+async function isCurrentAdmin() {
+  const user = auth.currentUser;
+  if (!user) return false;
+  const snapshot = await getDoc(doc(db, "admins", user.uid));
+  return snapshot.exists() && snapshot.data()?.role === "admin";
+}
 export const api = {
   products: {
-    list: () => wait([...productStore]),
-    featured: () => wait(productStore.filter((p) => p.published && p.featured)),
-    bySlug: (slug: string) => wait(productStore.find((p) => p.slug === slug) ?? null),
-    related: (slug: string, limit = 3) => {
-      const current = productStore.find((p) => p.slug === slug);
-      if (!current) return Promise.resolve([] as Product[]);
-      const same = productStore.filter((p) => p.category === current.category && p.slug !== slug);
-      const rest = productStore.filter((p) => p.category !== current.category && p.slug !== slug);
-      return wait([...same, ...rest].slice(0, limit));
+    list: async () => {
+      const admin = await isCurrentAdmin();
+      const snapshot = admin ? await getDocs(collection(db, "products")) : await getDocs(query(collection(db, "products"), where("published", "==", true)));
+      if (snapshot.empty) return admin ? wait([...mock.products]) : wait(mock.products.filter((p) => p.published));
+      return wait(snapshot.docs.map((item) => productFromDoc(item.id, item.data())));
     },
-    save: (product: Product) => {
-      const idx = productStore.findIndex((p) => p.id === product.id);
-      if (idx >= 0) productStore[idx] = product;
-      else productStore = [product, ...productStore];
-      return wait(product, 550);
+    featured: async () => {
+      const snapshot = await getDocs(query(collection(db, "products"), where("published", "==", true), where("featured", "==", true)));
+      return wait(snapshot.empty ? mock.products.filter((p) => p.published && p.featured) : snapshot.docs.map((item) => productFromDoc(item.id, item.data())));
     },
-    remove: (id: string) => {
-      productStore = productStore.filter((p) => p.id !== id);
-      return wait(true, 350);
+    bySlug: async (slug: string) => {
+      const snapshot = await getDocs(query(collection(db, "products"), where("slug", "==", slug), where("published", "==", true)));
+      return wait(snapshot.empty ? mock.products.find((p) => p.slug === slug && p.published) ?? null : productFromDoc(snapshot.docs[0].id, snapshot.docs[0].data()));
     },
+    related: async (slug: string, limit = 3) => {
+      const all = await api.products.list();
+      const current = all.find((p) => p.slug === slug);
+      if (!current) return [];
+      return [...all.filter((p) => p.category === current.category && p.slug !== slug), ...all.filter((p) => p.category !== current.category && p.slug !== slug)].slice(0, limit);
+    },
+    save: async (product: Product) => {
+      const id = product.id || `p-${Date.now()}`;
+      const value = { ...product, id, updatedAt: new Date().toISOString().slice(0, 10) };
+      await setDoc(doc(db, "products", id), value, { merge: true });
+      return value;
+    },
+    remove: async (id: string) => { await deleteDoc(doc(db, "products", id)); return true; },
   },
   categories: {
-    list: () => wait([...categoryStore]),
-    save: (category: Category) => {
-      const idx = categoryStore.findIndex((c) => c.id === category.id);
-      if (idx >= 0) categoryStore[idx] = category;
-      else categoryStore = [category, ...categoryStore];
-      return wait(category, 450);
+    list: async () => {
+      const admin = await isCurrentAdmin();
+      const snapshot = admin ? await getDocs(collection(db, "categories")) : await getDocs(query(collection(db, "categories"), where("published", "==", true)));
+      if (snapshot.empty) return admin ? wait([...mock.categories]) : wait(mock.categories.filter((c) => c.published));
+      return wait(snapshot.docs.map((item) => categoryFromDoc(item.id, item.data())));
     },
-    remove: (id: string) => {
-      categoryStore = categoryStore.filter((c) => c.id !== id);
-      return wait(true, 300);
+    save: async (category: Category) => {
+      const id = category.id || `c-${Date.now()}`;
+      const value = { ...category, id };
+      await setDoc(doc(db, "categories", id), value, { merge: true });
+      return value;
     },
+    remove: async (id: string) => { await deleteDoc(doc(db, "categories", id)); return true; },
   },
-  projects: {
-    list: () => wait([...projectStore]),
-    save: (project: Project) => {
-      const idx = projectStore.findIndex((p) => p.id === project.id);
-      if (idx >= 0) projectStore[idx] = project;
-      else projectStore = [project, ...projectStore];
-      return wait(project, 450);
-    },
-    remove: (id: string) => {
-      projectStore = projectStore.filter((p) => p.id !== id);
-      return wait(true, 300);
-    },
-  },
-  testimonials: {
-    list: () => wait([...testimonialStore]),
-    save: (testimonial: Testimonial) => {
-      const idx = testimonialStore.findIndex((t) => t.id === testimonial.id);
-      if (idx >= 0) testimonialStore[idx] = testimonial;
-      else testimonialStore = [testimonial, ...testimonialStore];
-      return wait(testimonial, 450);
-    },
-    remove: (id: string) => {
-      testimonialStore = testimonialStore.filter((t) => t.id !== id);
-      return wait(true, 300);
-    },
-  },
-  enquiries: {
-    list: () => wait([...enquiryStore]),
-    create: (enquiry: Enquiry) => {
-      enquiryStore = [enquiry, ...enquiryStore];
-      return wait(enquiry, 700);
-    },
-    setStatus: (id: string, status: Enquiry["status"]) => {
-      enquiryStore = enquiryStore.map((e) => (e.id === id ? { ...e, status } : e));
-      return wait(true, 250);
-    },
-    remove: (id: string) => {
-      enquiryStore = enquiryStore.filter((e) => e.id !== id);
-      return wait(true, 300);
-    },
-  },
-  team: {
-    list: () => wait([...teamStore]),
-    save: (member: TeamMember) => {
-      const idx = teamStore.findIndex((m) => m.id === member.id);
-      // Only one member can be featured as the leadership profile.
-      if (member.featured) teamStore = teamStore.map((m) => ({ ...m, featured: false }));
-      if (idx >= 0) teamStore[idx] = member;
-      else teamStore = [...teamStore, member];
-      return wait(member, 450);
-    },
-    remove: (id: string) => {
-      teamStore = teamStore.filter((m) => m.id !== id);
-      return wait(true, 300);
-    },
-  },
-  settings: {
-    get: () => wait({ ...settingsStore }),
-    save: (settings: BusinessSettings) => {
-      settingsStore = { ...settings };
-      Object.assign(mock.businessSettings, settings);
-      return wait(settingsStore, 600);
-    },
-  },
-  /** Cloudinary unsigned upload is wired in later — the UI already drives it. */
+  projects: { list: () => wait([...projectStore]), save: (project: Project) => { const idx = projectStore.findIndex((p) => p.id === project.id); if (idx >= 0) projectStore[idx] = project; else projectStore = [project, ...projectStore]; return wait(project, 450); }, remove: (id: string) => { projectStore = projectStore.filter((p) => p.id !== id); return wait(true, 300); } },
+  testimonials: { list: () => wait([...testimonialStore]), save: (testimonial: Testimonial) => { const idx = testimonialStore.findIndex((t) => t.id === testimonial.id); if (idx >= 0) testimonialStore[idx] = testimonial; else testimonialStore = [testimonial, ...testimonialStore]; return wait(testimonial, 450); }, remove: (id: string) => { testimonialStore = testimonialStore.filter((t) => t.id !== id); return wait(true, 300); } },
+  enquiries: { list: () => wait([...enquiryStore]), create: (enquiry: Enquiry) => { enquiryStore = [enquiry, ...enquiryStore]; return wait(enquiry, 700); }, setStatus: (id: string, status: Enquiry["status"]) => { enquiryStore = enquiryStore.map((e) => (e.id === id ? { ...e, status } : e)); return wait(true, 250); }, remove: (id: string) => { enquiryStore = enquiryStore.filter((e) => e.id !== id); return wait(true, 300); } },
+  team: { list: () => wait([...teamStore]), save: (member: TeamMember) => { const idx = teamStore.findIndex((m) => m.id === member.id); if (member.featured) teamStore = teamStore.map((m) => ({ ...m, featured: false })); if (idx >= 0) teamStore[idx] = member; else teamStore = [...teamStore, member]; return wait(member, 450); }, remove: (id: string) => { teamStore = teamStore.filter((m) => m.id !== id); return wait(true, 300); } },
+  settings: { get: () => wait({ ...settingsStore }), save: (settings: BusinessSettings) => { settingsStore = { ...settings }; Object.assign(mock.businessSettings, settings); return wait(settingsStore, 600); } },
   uploadImage: (fileName: string) => wait({ url: `images/${fileName}`, progress: 100 }, 1100),
 };
-
 export type AsyncState<T> = {
   data: T | null;
   loading: boolean;
