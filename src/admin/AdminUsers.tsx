@@ -1,11 +1,11 @@
 import { useEffect, useMemo, useState } from "react";
-import { collection, deleteDoc, doc, getDocs, serverTimestamp, setDoc, Timestamp } from "firebase/firestore";
+import { collection, doc, getDocs, serverTimestamp, setDoc, Timestamp } from "firebase/firestore";
 import { createUserWithEmailAndPassword, getAuth, signOut as secondarySignOut } from "firebase/auth";
 import { getApps, initializeApp } from "firebase/app";
-import { CheckCircle2, Clock3, Mail, Plus, Search, ShieldCheck, Trash2, UserPlus, UsersRound, Wifi } from "lucide-react";
+import { Clock3, Mail, Search, ShieldCheck, Trash2, UserPlus, UsersRound, Wifi } from "lucide-react";
 import { AdminPageHead } from "./AdminShell";
 import { Button, Field, Input, Micro, Modal, Notice, Select } from "../components/ui";
-import { db } from "../lib/firebase";
+import { auth, db } from "../lib/firebase";
 import { firebaseConfig } from "../lib/firebase";
 import { cn, formatDate } from "../lib/helpers";
 
@@ -144,14 +144,34 @@ export function AdminUsers() {
       setError("Admin accounts cannot be deleted from the customer user manager.");
       return;
     }
-    if (!window.confirm(`Delete the LUCOMI profile and stored customer history for ${user.name}? The Firebase Authentication account itself requires the secure server-side Admin SDK to be deleted.`)) return;
+    if (!window.confirm(`Permanently delete ${user.name}'s Firebase Authentication account, profile and stored customer history? This cannot be undone.`)) return;
 
     try {
-      await deleteDoc(doc(db, "users", user.uid));
-      setNotice(`Customer profile for ${user.name} was deleted.`);
+      const currentUser = auth.currentUser;
+      if (!currentUser) {
+        setError("Your admin session has expired. Please sign in again.");
+        return;
+      }
+
+      const idToken = await currentUser.getIdToken(true);
+      const response = await fetch("/api/admin/delete-user", {
+        method: "POST",
+        headers: {
+          "Content-Type": "application/json",
+          Authorization: `Bearer ${idToken}`,
+        },
+        body: JSON.stringify({ uid: user.uid }),
+      });
+
+      const result = await response.json().catch(() => ({}));
+      if (!response.ok) {
+        throw new Error(result.error || "The customer account could not be deleted.");
+      }
+
+      setNotice(`Deleted ${user.name}'s Firebase Authentication account and ${result.deletedRecords ?? "associated"} stored records.`);
       await loadUsers();
-    } catch {
-      setError("The customer profile could not be deleted.");
+    } catch (error) {
+      setError(error instanceof Error ? error.message : "The customer account could not be deleted.");
     }
   };
 
