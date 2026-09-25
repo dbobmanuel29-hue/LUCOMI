@@ -459,18 +459,42 @@ export function Modal({
     if (!open) return;
     const onKey = (e: KeyboardEvent) => e.key === "Escape" && onClose();
     document.addEventListener("keydown", onKey);
-    document.body.style.overflow = "hidden";
+    const scrollY = window.scrollY;
+    const body = document.body;
+    const html = document.documentElement;
+    const previous = {
+      overflow: body.style.overflow,
+      position: body.style.position,
+      top: body.style.top,
+      width: body.style.width,
+      overscrollBehavior: html.style.overscrollBehavior,
+    };
+
+    // Lock the page behind every modal/form. The fixed-body technique also
+    // works on mobile Safari where overflow:hidden alone can still scroll the
+    // document underneath a fixed dialog.
+    body.style.overflow = "hidden";
+    body.style.position = "fixed";
+    body.style.top = `-${scrollY}px`;
+    body.style.width = "100%";
+    html.style.overscrollBehavior = "none";
+
     const first = ref.current?.querySelector<HTMLElement>("input, select, textarea, button");
     first?.focus();
     return () => {
       document.removeEventListener("keydown", onKey);
-      document.body.style.overflow = "";
+      body.style.overflow = previous.overflow;
+      body.style.position = previous.position;
+      body.style.top = previous.top;
+      body.style.width = previous.width;
+      html.style.overscrollBehavior = previous.overscrollBehavior;
+      window.scrollTo(0, scrollY);
     };
   }, [open, onClose]);
 
   if (!open) return null;
   return (
-    <div className="fixed inset-0 z-[80] flex items-end justify-center overflow-y-auto bg-ink/45 p-0 backdrop-blur-[2px] sm:items-center sm:p-6">
+    <div className="fixed inset-0 z-[80] flex items-end justify-center overflow-y-auto overscroll-contain bg-ink/45 p-0 backdrop-blur-[2px] sm:items-center sm:p-6 [touch-action:pan-y]">
       <button className="fixed inset-0 cursor-default" aria-label="Close dialog" onClick={onClose} tabIndex={-1} />
       <motion.div
         ref={ref}
@@ -481,7 +505,7 @@ export function Modal({
         animate={{ opacity: 1, y: 0 }}
         transition={{ duration: 0.28, ease: [0.22, 0.61, 0.36, 1] }}
         className={cn(
-          "relative my-auto w-full rounded-t-2xl bg-paper p-6 plate-shadow-lg sm:rounded-2xl sm:p-9",
+          "relative my-auto w-full max-h-[calc(100dvh-24px)] overflow-y-auto overscroll-contain rounded-t-2xl bg-paper p-6 plate-shadow-lg sm:max-h-[calc(100dvh-48px)] sm:rounded-2xl sm:p-9 [touch-action:pan-y]",
           wide ? "sm:max-w-3xl" : "sm:max-w-xl",
         )}
       >
