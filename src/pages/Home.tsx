@@ -3,9 +3,8 @@ import { motion, useReducedMotion, useScroll, useTransform } from "framer-motion
 import { ArrowRight, BadgeCheck } from "lucide-react";
 import { api, useAsync } from "../lib/api";
 import { IMG } from "../lib/mock";
-import { priceLabel, waLink } from "../lib/helpers";
+import { priceLabel } from "../lib/helpers";
 import type { Product } from "../lib/types";
-import { WhatsAppIcon } from "../components/BrandIcons";
 import { ProductTextPlate } from "../components/ProductCard";
 import { ReviewQuote } from "../components/ReviewQuote";
 import { useQuote, WhatsAppLink } from "../components/QuoteFlow";
