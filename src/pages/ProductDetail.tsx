@@ -1,9 +1,8 @@
 import { useEffect, useState } from "react";
 import { Link, useParams } from "react-router-dom";
 import { ArrowLeft, Check, Send } from "lucide-react";
-import { WhatsAppIcon } from "../components/BrandIcons";
 import { api, useAsync } from "../lib/api";
-import { priceLabel, productEnquiryMessage, waLink } from "../lib/helpers";
+import { priceLabel, productEnquiryMessage } from "../lib/helpers";
 import { Gallery } from "../components/Gallery";
 import { ProductCard } from "../components/ProductCard";
 import { useQuote, WhatsAppLink } from "../components/QuoteFlow";
