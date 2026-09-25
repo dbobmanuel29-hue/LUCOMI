@@ -4,7 +4,7 @@ import { api } from "../lib/api";
 import { IMG } from "../lib/mock";
 import { quoteMessage, waLink } from "../lib/helpers";
 import { ImageUpload } from "../components/ImageUpload";
-import { useQuote } from "../components/QuoteFlow";
+import { useQuote, WhatsAppLink } from "../components/QuoteFlow";
 import { Accordion, Button, Field, Input, Marquee, Micro, Notice, RadioRow, Reveal, Select, Textarea, usePageMeta } from "../components/ui";
 
 const SPACE_TYPES = [
@@ -136,15 +136,9 @@ export default function Custom() {
               <p className="mt-2 text-[14.5px] leading-relaxed text-mute">
                 Send the details straight to our WhatsApp line and continue the conversation there.
               </p>
-              <Button
-                className="mt-4"
-                variant="outline"
-                href={waLink(message)}
-                target="_blank"
-                rel="noopener noreferrer"
-              >
-                <WhatsAppIcon className="h-4 w-4" /> WhatsApp Us
-              </Button>
+              <WhatsAppLink message={message} className="mt-4">
+                WhatsApp Us
+              </WhatsAppLink>
             </div>
           </div>
 
@@ -157,9 +151,9 @@ export default function Custom() {
                   Thank you. Your request has been received. A LUCOMI representative will contact you shortly.
                 </p>
                 <div className="mt-8 flex flex-wrap gap-3">
-                  <Button href={waLink(message)} target="_blank" rel="noopener noreferrer">
-                    <WhatsAppIcon className="h-4 w-4" /> Continue on WhatsApp
-                  </Button>
+                  <WhatsAppLink message={message}>
+                    Continue on WhatsApp
+                  </WhatsAppLink>
                   <Button variant="outline" href="/products">
                     Browse Furniture
                   </Button>
@@ -373,14 +367,9 @@ export default function Custom() {
             </ul>
             <div className="mt-8 flex flex-wrap gap-3">
               <Button onClick={() => open("", "Custom Furniture")}>Start a Custom Project</Button>
-              <Button
-                variant="outline"
-                href={waLink("Hello LUCOMI ENTERPRISE, I would like to discuss a custom furniture project.")}
-                target="_blank"
-                rel="noopener noreferrer"
-              >
-                <WhatsAppIcon className="h-4 w-4" /> WhatsApp Us
-              </Button>
+              <WhatsAppLink message="Hello LUCOMI ENTERPRISE, I would like to discuss a custom furniture project.">
+                WhatsApp Us
+              </WhatsAppLink>
             </div>
           </div>
 
