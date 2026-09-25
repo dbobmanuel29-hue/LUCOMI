@@ -111,6 +111,10 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
         provider: firebaseUser.providerData.some((item) => item.providerId === "google.com") ? "google" : "email",
         createdAt,
         retentionUntil: isAdmin ? null : retentionUntil,
+        lastLoginAt: firebaseUser.metadata.lastSignInTime
+          ? Timestamp.fromDate(new Date(firebaseUser.metadata.lastSignInTime))
+          : serverTimestamp(),
+        lastSeenAt: serverTimestamp(),
         updatedAt: serverTimestamp(),
       });
     } else {
@@ -132,7 +136,8 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
   };
 
   useEffect(() => {
-    return onAuthStateChanged(auth, (firebaseUser) => {
+    let heartbeat: number | undefined;
+    const unsubscribe = onAuthStateChanged(auth, (firebaseUser) => {
       setUser(firebaseUser ? mapFirebaseUser(firebaseUser) : null);
       setIsAdmin(false);
 
@@ -141,7 +146,7 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
           // Profile persistence errors should not block authentication.
         });
 
-        const heartbeat = window.setInterval(() => {
+        heartbeat = window.setInterval(() => {
           void setDoc(doc(db, "users", firebaseUser.uid), {
             lastSeenAt: serverTimestamp(),
             updatedAt: serverTimestamp(),
@@ -156,8 +161,11 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
             setIsAdmin(false);
           });
       }
-      return () => window.clearInterval(heartbeat);
     });
+    return () => {
+      unsubscribe();
+      if (heartbeat) window.clearInterval(heartbeat);
+    };
   }, []);
 
   const updateUser = async (changes: Partial<AuthUser>) => {
