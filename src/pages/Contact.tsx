@@ -53,6 +53,7 @@ export default function Contact() {
     try {
       await api.enquiries.create({
         id: `e${Date.now()}`,
+        userId: user?.uid,
         fullName: form.fullName,
         companyName: form.companyName,
         phone: form.phone,
