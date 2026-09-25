@@ -230,8 +230,6 @@ export function WhatsAppLink({
         }
         window.open(waLink(message), "_blank", "noopener,noreferrer");
       }}
-      target="_blank"
-      rel="noopener noreferrer"
       className={cn(
         "inline-flex items-center gap-2 rounded-full bg-royal px-5 py-3 text-[11.5px] font-semibold uppercase tracking-[0.06em] text-white transition-colors hover:bg-royal-dark",
         className,
