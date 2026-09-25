@@ -26,27 +26,26 @@ service cloud.firestore {
         );
     }
 
-    // Admin records are provisioned manually by the project owner in Firebase Console.
-    // Clients can never create, edit, or delete their own admin role.
     match /admins/{uid} {
+      // Admin role documents are managed manually/server-side.
+      // A signed-in user may only read their own admin record.
       allow read: if isOwner(uid);
       allow write: if false;
     }
 
-    // Customer profile. Admins are excluded from the one-year retention expiry.
     match /users/{uid} {
       allow read: if isAdmin() || isOwner(uid);
 
       allow create: if isAdmin()
         || (
           isOwner(uid)
-        && request.resource.data.uid == uid
-        && request.resource.data.email == request.auth.token.email
-        && request.resource.data.provider in ["email", "google"]
-        && request.resource.data.keys().hasOnly([
-          "uid", "name", "email", "phone", "photoURL", "provider",
-          "createdAt", "retentionUntil", "lastLoginAt", "lastSeenAt", "updatedAt"
-        ])
+          && request.resource.data.uid == uid
+          && request.resource.data.email == request.auth.token.email
+          && request.resource.data.provider in ["email", "google"]
+          && request.resource.data.keys().hasOnly([
+            "uid", "name", "email", "phone", "photoURL", "provider",
+            "createdAt", "retentionUntil", "lastLoginAt", "lastSeenAt", "updatedAt"
+          ])
         );
 
       allow update: if isAdmin()
@@ -64,7 +63,8 @@ service cloud.firestore {
               && request.resource.data.createdAt is timestamp
               && request.resource.data.retentionUntil is timestamp
               && request.resource.data.diff(resource.data).affectedKeys().hasOnly([
-                "name", "phone", "photoURL", "createdAt", "retentionUntil", "lastLoginAt", "lastSeenAt", "updatedAt"
+                "name", "phone", "photoURL", "createdAt", "retentionUntil",
+                "lastLoginAt", "lastSeenAt", "updatedAt"
               ])
             )
           )
@@ -73,7 +73,6 @@ service cloud.firestore {
       allow delete: if isAdmin() || isOwner(uid);
     }
 
-    // Public catalogue.
     match /categories/{id} {
       allow read: if isAdmin() || resource.data.published == true;
       allow write: if isAdmin();
@@ -113,7 +112,6 @@ service cloud.firestore {
         || (signedIn() && resource.data.get("userId", "") == request.auth.uid);
     }
 
-    // Customer enquiries / contact requests / quote requests / custom requests.
     match /enquiries/{id} {
       allow read: if isAdmin()
         || (signedIn() && resource.data.get("userId", "") == request.auth.uid);
@@ -131,7 +129,6 @@ service cloud.firestore {
         || (signedIn() && resource.data.get("userId", "") == request.auth.uid);
     }
 
-    // Future quote-specific collection if the catalogue grows into a separate quote workflow.
     match /quotes/{id} {
       allow read: if isAdmin()
         || (signedIn() && resource.data.get("userId", "") == request.auth.uid);
@@ -144,22 +141,20 @@ service cloud.firestore {
         );
 
       allow update: if isAdmin();
+
       allow delete: if isAdmin()
         || (signedIn() && resource.data.get("userId", "") == request.auth.uid);
     }
 
-    // Public business configuration. Only admins may change it.
     match /settings/{id} {
       allow read: if isAdmin() || id == "business";
       allow write: if isAdmin();
     }
 
-    // Audit logs are private to admins.
     match /auditLogs/{id} {
       allow read, write: if isAdmin();
     }
 
-    // Deny everything not explicitly listed above.
     match /{document=**} {
       allow read, write: if false;
     }
