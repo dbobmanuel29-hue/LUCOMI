@@ -15,6 +15,10 @@ import {
   X,
 } from "lucide-react";
 import { api, useAsync } from "../lib/api";
+import { auth, db } from "../lib/firebase";
+import { doc, getDoc } from "firebase/firestore";
+import { GoogleAuthProvider, signInWithEmailAndPassword, signInWithPopup } from "firebase/auth";
+import { useAuth } from "../components/AuthFlow";
 import { cn, formatDate } from "../lib/helpers";
 import { ThemeToggle } from "../components/Chrome";
 import { Logo } from "../components/Logo";
@@ -34,7 +38,38 @@ export const ADMIN_NAV = [
 /* -------------------------------- login ------------------------------- */
 export function AdminLogin() {
   const [status, setStatus] = useState<"idle" | "saving">("idle");
+  const [error, setError] = useState("");
+  const [email, setEmail] = useState("");
+  const [password, setPassword] = useState("");
+  const [googleBusy, setGoogleBusy] = useState(false);
   const navigate = useNavigate();
+  const { user } = useAuth();
+
+  const signIn = async () => {
+    setStatus("saving");
+    setError("");
+    try {
+      await signInWithEmailAndPassword(auth, email.trim(), password);
+      navigate("/admin");
+    } catch {
+      setError("Admin sign-in failed. Use an authorized LUCOMI admin account.");
+    } finally {
+      setStatus("idle");
+    }
+  };
+
+  const googleSignIn = async () => {
+    setGoogleBusy(true);
+    setError("");
+    try {
+      await signInWithPopup(auth, new GoogleAuthProvider());
+      navigate("/admin");
+    } catch {
+      setError("Google sign-in could not be completed.");
+    } finally {
+      setGoogleBusy(false);
+    }
+  };
 
   return (
     <main className="flex min-h-screen items-center justify-center bg-ink px-5 py-16">
@@ -47,22 +82,44 @@ export function AdminLogin() {
         <Logo />
         <h1 className="display mt-8 text-5xl">Admin Sign In</h1>
         <p className="mt-3 text-[14.5px] leading-relaxed text-mute">
-          Frontend preview — Firebase Authentication connects here later. Any details will open the dashboard.
+          Only users listed in the Firebase <strong>admins</strong> collection can access the dashboard.
         </p>
+
+        {user && (
+          <div className="mt-6 rounded-xl border border-line bg-plate p-4 text-sm">
+            <p className="font-semibold">Signed in as {user.name}</p>
+            <p className="mt-1 text-mute">{user.email}</p>
+            <Button full className="mt-4" onClick={() => navigate("/admin")}>
+              Continue as this account
+            </Button>
+          </div>
+        )}
+
+        <div className="mt-6 space-y-3">
+          <Button full variant="outline" onClick={() => void googleSignIn()} disabled={googleBusy}>
+            {googleBusy ? "Connecting..." : "Continue with Google"}
+          </Button>
+          <div className="flex items-center gap-3">
+            <span className="h-px flex-1 bg-line" />
+            <span className="micro text-mute">OR EMAIL</span>
+            <span className="h-px flex-1 bg-line" />
+          </div>
+        </div>
+
         <form
-          className="mt-8 space-y-4"
+          className="mt-5 space-y-4"
           onSubmit={(e) => {
             e.preventDefault();
-            setStatus("saving");
-            setTimeout(() => navigate("/admin"), 500);
+            void signIn();
           }}
         >
           <Field label="Email Address" required>
-            <Input required type="email" defaultValue="admin@lucomienterprise.com" autoComplete="username" />
+            <Input required type="email" value={email} onChange={(e) => setEmail(e.target.value)} autoComplete="username" />
           </Field>
           <Field label="Password" required>
-            <Input required type="password" defaultValue="••••••••" autoComplete="current-password" />
+            <Input required type="password" value={password} onChange={(e) => setPassword(e.target.value)} autoComplete="current-password" />
           </Field>
+          {error && <Notice tone="warn" title="Access denied">{error}</Notice>}
           <Button type="submit" full size="lg" disabled={status === "saving"}>
             {status === "saving" ? "Signing in…" : "Sign In"}
           </Button>
@@ -80,6 +137,44 @@ export function AdminLogin() {
 /* ------------------------------- layout ------------------------------- */
 export function AdminLayout() {
   const [openMenu, setOpenMenu] = useState(false);
+  const [access, setAccess] = useState<"checking" | "allowed" | "denied">("checking");
+  const navigate = useNavigate();
+  const { user } = useAuth();
+
+  useEffect(() => {
+    let cancelled = false;
+    if (!user) {
+      setAccess("denied");
+      navigate("/admin/login", { replace: true });
+      return;
+    }
+
+    void getDoc(doc(db, "admins", user.uid)).then((snapshot) => {
+      if (cancelled) return;
+      const allowed = snapshot.exists() && snapshot.data()?.role === "admin";
+      setAccess(allowed ? "allowed" : "denied");
+      if (!allowed) navigate("/admin/login", { replace: true });
+    }).catch(() => {
+      if (cancelled) return;
+      setAccess("denied");
+      navigate("/admin/login", { replace: true });
+    });
+
+    return () => {
+      cancelled = true;
+    };
+  }, [user, navigate]);
+
+  if (access !== "allowed") {
+    return (
+      <main className="flex min-h-screen items-center justify-center bg-paper px-5">
+        <div className="text-center">
+          <Logo />
+          <p className="mt-6 text-sm text-mute">Checking admin access…</p>
+        </div>
+      </main>
+    );
+  }
 
   const nav = (
     <nav className="space-y-1">
@@ -109,9 +204,9 @@ export function AdminLayout() {
         <div className="flex h-full flex-col">
           <Logo />
           <div className="mt-9 flex-1">{nav}</div>
-          <Link to="/" className="micro flex items-center gap-2 text-white/45 hover:text-white">
-            <LogOut className="h-3.5 w-3.5" /> Back to website
-          </Link>
+          <button onClick={() => { void auth.signOut(); navigate("/"); }} className="micro flex items-center gap-2 text-white/45 hover:text-white">
+            <LogOut className="h-3.5 w-3.5" /> Sign out
+          </button>
         </div>
       </aside>
 
@@ -122,15 +217,9 @@ export function AdminLayout() {
           </div>
           <Micro className="hidden text-ink lg:block">LUCOMI Enterprise — Content Manager</Micro>
           <div className="flex items-center gap-3">
-            <Link to="/" className="micro hidden text-mute hover:text-ink sm:block">
-              View website
-            </Link>
+            <Link to="/" className="micro hidden text-mute hover:text-ink sm:block">View website</Link>
             <ThemeToggle />
-            <button
-              onClick={() => setOpenMenu(true)}
-              className="flex h-10 w-10 items-center justify-center rounded-lg border border-line bg-white lg:hidden"
-              aria-label="Open admin menu"
-            >
+            <button onClick={() => setOpenMenu(true)} className="flex h-10 w-10 items-center justify-center rounded-lg border border-line bg-white lg:hidden" aria-label="Open admin menu">
               <Menu className="h-5 w-5" />
             </button>
           </div>
@@ -145,18 +234,14 @@ export function AdminLayout() {
         <div className="fixed inset-0 z-50 bg-ink/95 px-5 py-7 lg:hidden">
           <div className="flex items-center justify-between">
             <Logo />
-            <button
-              onClick={() => setOpenMenu(false)}
-              className="flex h-10 w-10 items-center justify-center rounded-lg border border-white/25 text-white"
-              aria-label="Close admin menu"
-            >
+            <button onClick={() => setOpenMenu(false)} className="flex h-10 w-10 items-center justify-center rounded-lg border border-white/25 text-white" aria-label="Close admin menu">
               <X className="h-5 w-5" />
             </button>
           </div>
           <div className="mt-8">{nav}</div>
-          <Link to="/" className="micro mt-8 inline-flex items-center gap-2 text-white/50">
-            <LogOut className="h-3.5 w-3.5" /> Back to website
-          </Link>
+          <button onClick={() => { void auth.signOut(); navigate("/"); }} className="micro mt-8 inline-flex items-center gap-2 text-white/50">
+            <LogOut className="h-3.5 w-3.5" /> Sign out
+          </button>
         </div>
       )}
     </div>
