@@ -102,7 +102,7 @@ export function AdminLogin() {
           <Button full variant="outline" onClick={() => void googleSignIn()} disabled={googleBusy}>
             {googleBusy ? "Connecting..." : "Continue with Google"}
           </Button>
-          <div className="flex items-center gap-3">
+          <div className="flex shrink-0 items-center gap-2 sm:gap-3">
             <span className="h-px flex-1 bg-line" />
             <span className="micro text-mute">OR EMAIL</span>
             <span className="h-px flex-1 bg-line" />
@@ -143,6 +143,36 @@ export function AdminLayout() {
   const [access, setAccess] = useState<"checking" | "allowed" | "denied">("checking");
   const navigate = useNavigate();
   const { user, authReady } = useAuth();
+
+  useEffect(() => {
+    if (!openMenu) return;
+
+    const scrollY = window.scrollY;
+    const body = document.body;
+    const html = document.documentElement;
+    const previous = {
+      overflow: body.style.overflow,
+      position: body.style.position,
+      top: body.style.top,
+      width: body.style.width,
+      overscrollBehavior: html.style.overscrollBehavior,
+    };
+
+    body.style.overflow = "hidden";
+    body.style.position = "fixed";
+    body.style.top = `-${scrollY}px`;
+    body.style.width = "100%";
+    html.style.overscrollBehavior = "none";
+
+    return () => {
+      body.style.overflow = previous.overflow;
+      body.style.position = previous.position;
+      body.style.top = previous.top;
+      body.style.width = previous.width;
+      html.style.overscrollBehavior = previous.overscrollBehavior;
+      window.scrollTo(0, scrollY);
+    };
+  }, [openMenu]);
 
   useEffect(() => {
     let cancelled = false;
@@ -220,11 +250,11 @@ export function AdminLayout() {
       </aside>
 
       <div className="flex min-h-screen flex-col">
-        <header className="sticky top-0 z-40 flex h-[70px] items-center justify-between gap-4 border-b border-line bg-paper/95 px-5 backdrop-blur-md lg:px-10">
-          <div className="lg:hidden flex items-center gap-2.5">
+        <header className="sticky top-0 z-40 flex min-h-[64px] items-center justify-between gap-3 border-b border-line bg-paper/95 px-4 py-3 backdrop-blur-md sm:px-6 lg:h-[70px] lg:px-10 lg:py-0">
+          <div className="flex min-w-0 items-center gap-2.5 lg:hidden">
             <Mark className="h-11 w-auto shrink-0" />
             <div className="leading-none">
-              <span className="block font-sans text-[17px] font-bold tracking-[0.02em] text-ink">LUCOMI</span>
+              <span className="block truncate font-sans text-[16px] font-bold tracking-[0.02em] text-ink sm:text-[17px]">LUCOMI</span>
               <span className="mt-1 block font-sans text-[7px] font-semibold tracking-[0.28em] text-royal">ENTERPRISE</span>
             </div>
           </div>
@@ -238,13 +268,13 @@ export function AdminLayout() {
           </div>
         </header>
 
-        <main className="mx-auto w-full max-w-[1500px] flex-1 px-5 py-8 lg:px-10 lg:py-10">
+        <main className="mx-auto w-full max-w-[1500px] flex-1 overflow-x-hidden px-4 py-6 sm:px-6 sm:py-8 lg:px-10 lg:py-10">
           <Outlet />
         </main>
       </div>
 
       {openMenu && (
-        <div className="fixed inset-0 z-50 bg-ink/95 px-5 py-7 lg:hidden">
+        <div className="fixed inset-0 z-50 flex flex-col overflow-hidden overscroll-none bg-ink/95 px-4 py-5 sm:px-6 sm:py-7 lg:hidden">
           <div className="flex items-center justify-between">
             <div className="flex items-center gap-2.5 text-white">
               <Mark className="h-11 w-auto shrink-0 brightness-0 invert" />
@@ -257,8 +287,8 @@ export function AdminLayout() {
               <X className="h-5 w-5" />
             </button>
           </div>
-          <div className="mt-8">{nav}</div>
-          <div className="mt-8 space-y-4">
+          <div className="mt-8 min-h-0 flex-1 overflow-y-auto overscroll-contain pr-1" style={{ WebkitOverflowScrolling: "touch" }}>{nav}</div>
+          <div className="mt-6 shrink-0 space-y-4 border-t border-white/10 pt-5">
             <Link to="/" onClick={() => setOpenMenu(false)} className="micro inline-flex items-center gap-2 text-white/70 transition-colors hover:text-white">
               <ArrowLeft className="h-3.5 w-3.5" /> Back to website
             </Link>
