@@ -4,6 +4,7 @@ import { IMG } from "../lib/mock";
 import { quoteMessage } from "../lib/helpers";
 import { ImageUpload } from "../components/ImageUpload";
 import { useQuote, WhatsAppLink } from "../components/QuoteFlow";
+import { useAuth } from "../components/AuthFlow";
 import { Accordion, Button, Field, Input, Marquee, Micro, Notice, RadioRow, Reveal, Select, Textarea, usePageMeta } from "../components/ui";
 
 const SPACE_TYPES = [
@@ -42,6 +43,7 @@ export default function Custom() {
     "Have a space in mind? LUCOMI creates custom office furniture tailored to your space, style and business needs — from executive offices to complete workplace setups.",
   );
   const { open } = useQuote();
+  const { user, open: openAuth } = useAuth();
   const [images, setImages] = useState<string[]>([]);
   const [status, setStatus] = useState<"idle" | "saving" | "success" | "error">("idle");
   const [form, setForm] = useState({
@@ -68,6 +70,7 @@ export default function Custom() {
     try {
       await api.enquiries.create({
         id: `e${Date.now()}`,
+        userId: user?.uid,
         fullName: form.fullName,
         companyName: form.companyName,
         phone: form.phone,
@@ -157,6 +160,16 @@ export default function Custom() {
                     Browse Furniture
                   </Button>
                 </div>
+              </div>
+            ) : !user ? (
+              <div className="rounded-xl border border-line/70 bg-white p-8 sm:p-10 plate-shadow">
+                <Micro className="text-royal">Account required</Micro>
+                <h3 className="display mt-4 text-[clamp(2.2rem,5vw,3.4rem)]">Sign in to start your custom project.</h3>
+                <p className="mt-4 max-w-lg text-[15px] leading-relaxed text-mute">
+                  You can view the custom furniture information without an account, but submitting a project brief or
+                  contacting LUCOMI requires a signed-in account.
+                </p>
+                <Button className="mt-7" size="lg" onClick={openAuth}>Sign In / Create Account</Button>
               </div>
             ) : (
               <form onSubmit={submit} className="space-y-5 rounded-xl border border-line/70 bg-white p-6 sm:p-9 plate-shadow">
