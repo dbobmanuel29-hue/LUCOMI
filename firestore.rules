@@ -44,7 +44,7 @@ service cloud.firestore {
           && request.resource.data.provider in ["email", "google"]
           && request.resource.data.keys().hasOnly([
             "uid", "name", "email", "phone", "photoURL", "provider",
-            "createdAt", "retentionUntil", "lastLoginAt", "lastSeenAt", "updatedAt"
+            "createdAt", "retentionUntil", "lastLoginAt", "lastSeenAt", "profileImageChangedAt", "updatedAt"
           ])
         );
 
@@ -55,16 +55,33 @@ service cloud.firestore {
           && request.resource.data.email == resource.data.email
           && request.resource.data.provider == resource.data.provider
           && (
-            request.resource.data.diff(resource.data).affectedKeys().hasOnly([
-              "name", "phone", "photoURL", "lastLoginAt", "lastSeenAt", "updatedAt"
-            ])
+            (
+              request.resource.data.diff(resource.data).affectedKeys().hasOnly([
+                "name", "phone", "photoURL", "lastLoginAt", "lastSeenAt", "updatedAt"
+              ])
+              && (
+                !request.resource.data.diff(resource.data).affectedKeys().hasAny(["photoURL"])
+                || !resource.data.keys().hasAny(["profileImageChangedAt"])
+                || (
+                  request.resource.data.profileImageChangedAt is timestamp
+                  && resource.data.profileImageChangedAt is timestamp
+                  && (
+                    request.time.year() > resource.data.profileImageChangedAt.year()
+                    || (
+                      request.time.year() == resource.data.profileImageChangedAt.year()
+                      && request.time.month() > resource.data.profileImageChangedAt.month()
+                    )
+                  )
+                )
+              )
+            )
             || (
               !resource.data.keys().hasAny(["createdAt", "retentionUntil"])
               && request.resource.data.createdAt is timestamp
               && request.resource.data.retentionUntil is timestamp
               && request.resource.data.diff(resource.data).affectedKeys().hasOnly([
                 "name", "phone", "photoURL", "createdAt", "retentionUntil",
-                "lastLoginAt", "lastSeenAt", "updatedAt"
+                "lastLoginAt", "lastSeenAt", "profileImageChangedAt", "updatedAt"
               ])
             )
           )
