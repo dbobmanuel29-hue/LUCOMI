@@ -2,17 +2,42 @@ import { createContext, useContext, useEffect, useState } from "react";
 import { Eye, EyeOff, LockKeyhole, Mail, User } from "lucide-react";
 import { Button, Field, Input, Modal, Notice } from "./ui";
 import { auth } from "../lib/firebase";
-import {\n  GoogleAuthProvider,\n  User as FirebaseUser,\n  createUserWithEmailAndPassword,\n  onAuthStateChanged,\n  signInWithEmailAndPassword,\n  signInWithPopup,\n  signOut as firebaseSignOut,\n  updateProfile,\n} from "firebase/auth";
+import {
+  GoogleAuthProvider,
+  User as FirebaseUser,
+  createUserWithEmailAndPassword,
+  onAuthStateChanged,
+  signInWithEmailAndPassword,
+  signInWithPopup,
+  signOut as firebaseSignOut,
+  updateProfile,
+} from "firebase/auth";
 
 type AuthMode = "signin" | "signup";
-export type AuthUser = { name: string; email: string; phone?: string; photoURL?: string; provider: "email" | "google"; uid: string };
 
-const AuthContext = createContext<{ open: () => void; user: AuthUser | null; updateUser: (changes: Partial<AuthUser>) => void; signOut: () => void }>({
+export type AuthUser = {
+  name: string;
+  email: string;
+  phone?: string;
+  photoURL?: string;
+  provider: "email" | "google";
+  uid: string;
+};
+
+type AuthContextValue = {
+  open: () => void;
+  user: AuthUser | null;
+  updateUser: (changes: Partial<AuthUser>) => void;
+  signOut: () => Promise<void>;
+};
+
+const AuthContext = createContext<AuthContextValue>({
   open: () => {},
   user: null,
   updateUser: () => {},
-  signOut: () => {},
+  signOut: async () => {},
 });
+
 export const useAuth = () => useContext(AuthContext);
 
 function GoogleLogo() {
@@ -27,7 +52,10 @@ function GoogleLogo() {
 }
 
 function mapFirebaseUser(firebaseUser: FirebaseUser): AuthUser {
-  const provider = firebaseUser.providerData.some((item) => item.providerId === "google.com") ? "google" : "email";
+  const provider = firebaseUser.providerData.some(
+    (item) => item.providerId === "google.com"
+  ) ? "google" : "email";
+
   return {
     uid: firebaseUser.uid,
     name: firebaseUser.displayName || firebaseUser.email?.split("@")[0] || "LUCOMI User",
@@ -89,24 +117,47 @@ function AuthModal({
 }) {
   const [mode, setMode] = useState<AuthMode>("signup");
   const [showPassword, setShowPassword] = useState(false);
-  const [submitted, setSubmitted] = useState(false);\n  const [busy, setBusy] = useState(false);\n  const [error, setError] = useState("");
+  const [submitted, setSubmitted] = useState(false);
+  const [busy, setBusy] = useState(false);
+  const [error, setError] = useState("");
   const [name, setName] = useState("");
   const [email, setEmail] = useState("");
   const [password, setPassword] = useState("");
 
-  const authenticate = (provider: "email" | "google") => {
-    onAuthenticated({
-      name: provider === "google" ? "Google User" : name.trim() || "LUCOMI User",
-      email: provider === "google" ? "Google account" : email.trim(),
-      phone: "",
-      provider,
-    });
-    setSubmitted(true);
-  };
-
   const switchMode = (next: AuthMode) => {
     setMode(next);
     setSubmitted(false);
+    setError("");
+  };
+
+  const authenticate = async (provider: "email" | "google") => {
+    setBusy(true);
+    setError("");
+
+    try {
+      let firebaseUser: FirebaseUser;
+
+      if (provider === "google") {
+        const result = await signInWithPopup(auth, new GoogleAuthProvider());
+        firebaseUser = result.user;
+      } else if (mode === "signup") {
+        const result = await createUserWithEmailAndPassword(auth, email.trim(), password);
+        if (name.trim()) {
+          await updateProfile(result.user, { displayName: name.trim() });
+        }
+        firebaseUser = result.user;
+      } else {
+        const result = await signInWithEmailAndPassword(auth, email.trim(), password);
+        firebaseUser = result.user;
+      }
+
+      onAuthenticated(mapFirebaseUser(firebaseUser));
+      setSubmitted(true);
+    } catch (authError) {
+      setError(friendlyAuthError(authError));
+    } finally {
+      setBusy(false);
+    }
   };
 
   return (
@@ -118,24 +169,20 @@ function AuthModal({
       {submitted ? (
         <div className="space-y-5">
           <Notice title="Signed in successfully">
-            Your profile is now active. Firebase Authentication will replace this temporary frontend session in the backend phase.
+            Your LUCOMI account is now active.
           </Notice>
           <Button full onClick={onClose}>Continue</Button>
         </div>
       ) : (
         <div className="w-full space-y-5">
           <div className="grid grid-cols-2 rounded-lg border border-line bg-plate p-1">
-            <button type="button" onClick={() => switchMode("signin")} className={mode === "signin" ? "rounded-md bg-white px-3 py-2.5 text-sm font-semibold text-ink shadow-sm" : "rounded-md px-3 py-2.5 text-sm font-semibold text-mute"}>
-              Sign In
-            </button>
-            <button type="button" onClick={() => switchMode("signup")} className={mode === "signup" ? "rounded-md bg-white px-3 py-2.5 text-sm font-semibold text-ink shadow-sm" : "rounded-md px-3 py-2.5 text-sm font-semibold text-mute"}>
-              Sign Up
-            </button>
+            <button type="button" onClick={() => switchMode("signin")} className={mode === "signin" ? "rounded-md bg-white px-3 py-2.5 text-sm font-semibold text-ink shadow-sm" : "rounded-md px-3 py-2.5 text-sm font-semibold text-mute"}>Sign In</button>
+            <button type="button" onClick={() => switchMode("signup")} className={mode === "signup" ? "rounded-md bg-white px-3 py-2.5 text-sm font-semibold text-ink shadow-sm" : "rounded-md px-3 py-2.5 text-sm font-semibold text-mute"}>Sign Up</button>
           </div>
 
-          <button type="button" onClick={() => void authenticate("google")} disabled={busy} className="flex min-h-12 w-full items-center justify-center gap-3 rounded-full border border-line bg-white px-4 py-3 text-sm font-semibold text-ink transition-colors hover:border-ink/40 hover:bg-plate">
+          <button type="button" onClick={() => void authenticate("google")} disabled={busy} className="flex min-h-12 w-full items-center justify-center gap-3 rounded-full border border-line bg-white px-4 py-3 text-sm font-semibold text-ink transition-colors hover:border-ink/40 hover:bg-plate disabled:cursor-not-allowed disabled:opacity-60">
             <GoogleLogo />
-            <span>Continue with Google</span>
+            <span>{busy ? "Please wait..." : "Continue with Google"}</span>
           </button>
 
           <div className="flex items-center gap-3">
@@ -171,11 +218,15 @@ function AuthModal({
               </div>
             </Field>
 
-            {error && <Notice title="Sign-in issue">{error}</Notice>}\n\n            {mode === "signin" && (
+            {error && <Notice title="Sign-in issue">{error}</Notice>}
+
+            {mode === "signin" && (
               <button type="button" className="text-left text-xs font-semibold text-royal hover:underline">Forgot password?</button>
             )}
 
-            <Button full type="submit" size="lg" disabled={busy}>{busy ? "Please wait..." : mode === "signup" ? "Create Account" : "Sign In"}</Button>
+            <Button full type="submit" size="lg" disabled={busy}>
+              {busy ? "Please wait..." : mode === "signup" ? "Create Account" : "Sign In"}
+            </Button>
           </form>
 
           <p className="text-center text-xs leading-relaxed text-mute">
