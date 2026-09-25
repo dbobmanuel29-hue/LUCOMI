@@ -13,6 +13,7 @@ import {
   Menu,
   Users,
   X,
+  ArrowLeft,
 } from "lucide-react";
 import { api, useAsync } from "../lib/api";
 import { auth, db } from "../lib/firebase";
@@ -21,7 +22,7 @@ import { GoogleAuthProvider, signInWithEmailAndPassword, signInWithPopup } from 
 import { useAuth } from "../components/AuthFlow";
 import { cn, formatDate } from "../lib/helpers";
 import { ThemeToggle } from "../components/Chrome";
-import { Logo } from "../components/Logo";
+import { Logo, Mark } from "../components/Logo";
 import { Button, Field, Input, Micro, Notice, Skeleton } from "../components/ui";
 
 export const ADMIN_NAV = [
@@ -204,16 +205,25 @@ export function AdminLayout() {
         <div className="flex h-full flex-col">
           <Logo />
           <div className="mt-9 flex-1">{nav}</div>
-          <button onClick={() => { void auth.signOut(); navigate("/"); }} className="micro flex items-center gap-2 text-white/45 hover:text-white">
-            <LogOut className="h-3.5 w-3.5" /> Sign out
-          </button>
+          <div className="space-y-3">
+            <Link to="/" className="micro flex items-center gap-2 text-white/55 transition-colors hover:text-white">
+              <ArrowLeft className="h-3.5 w-3.5" /> Back to website
+            </Link>
+            <button onClick={() => { void auth.signOut(); navigate("/"); }} className="micro flex items-center gap-2 text-white/45 transition-colors hover:text-white">
+              <LogOut className="h-3.5 w-3.5" /> Sign out
+            </button>
+          </div>
         </div>
       </aside>
 
       <div className="flex min-h-screen flex-col">
         <header className="sticky top-0 z-40 flex h-[70px] items-center justify-between gap-4 border-b border-line bg-paper/95 px-5 backdrop-blur-md lg:px-10">
-          <div className="lg:hidden">
-            <Logo />
+          <div className="lg:hidden flex items-center gap-2.5">
+            <Mark className="h-11 w-auto shrink-0" />
+            <div className="leading-none">
+              <span className="block font-sans text-[17px] font-bold tracking-[0.02em] text-ink">LUCOMI</span>
+              <span className="mt-1 block font-sans text-[7px] font-semibold tracking-[0.28em] text-royal">ENTERPRISE</span>
+            </div>
           </div>
           <Micro className="hidden text-ink lg:block">LUCOMI Enterprise — Content Manager</Micro>
           <div className="flex items-center gap-3">
@@ -233,15 +243,26 @@ export function AdminLayout() {
       {openMenu && (
         <div className="fixed inset-0 z-50 bg-ink/95 px-5 py-7 lg:hidden">
           <div className="flex items-center justify-between">
-            <Logo />
+            <div className="flex items-center gap-2.5 text-white">
+              <Mark className="h-11 w-auto shrink-0 brightness-0 invert" />
+              <div className="leading-none">
+                <span className="block font-sans text-[17px] font-bold tracking-[0.02em] text-white">LUCOMI</span>
+                <span className="mt-1 block font-sans text-[7px] font-semibold tracking-[0.28em] text-white/75">ENTERPRISE</span>
+              </div>
+            </div>
             <button onClick={() => setOpenMenu(false)} className="flex h-10 w-10 items-center justify-center rounded-lg border border-white/25 text-white" aria-label="Close admin menu">
               <X className="h-5 w-5" />
             </button>
           </div>
           <div className="mt-8">{nav}</div>
-          <button onClick={() => { void auth.signOut(); navigate("/"); }} className="micro mt-8 inline-flex items-center gap-2 text-white/50">
-            <LogOut className="h-3.5 w-3.5" /> Sign out
-          </button>
+          <div className="mt-8 space-y-4">
+            <Link to="/" onClick={() => setOpenMenu(false)} className="micro inline-flex items-center gap-2 text-white/70 transition-colors hover:text-white">
+              <ArrowLeft className="h-3.5 w-3.5" /> Back to website
+            </Link>
+            <button onClick={() => { void auth.signOut(); navigate("/"); }} className="micro flex items-center gap-2 text-white/50 transition-colors hover:text-white">
+              <LogOut className="h-3.5 w-3.5" /> Sign out
+            </button>
+          </div>
         </div>
       )}
     </div>
