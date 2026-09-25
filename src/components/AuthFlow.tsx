@@ -28,6 +28,7 @@ export type AuthUser = {
 type AuthContextValue = {
   open: () => void;
   user: AuthUser | null;
+  isAdmin: boolean;
   updateUser: (changes: Partial<AuthUser>) => Promise<void>;
   signOut: () => Promise<void>;
   openSignIn: () => void;
@@ -87,6 +88,7 @@ function friendlyAuthError(error: unknown) {
 export function AuthProvider({ children }: { children: React.ReactNode }) {
   const [open, setOpen] = useState(false);
   const [user, setUser] = useState<AuthUser | null>(null);
+  const [isAdmin, setIsAdmin] = useState(false);
 
   const ensureUserProfile = async (firebaseUser: FirebaseUser) => {
     const ref = doc(db, "users", firebaseUser.uid);
@@ -123,10 +125,20 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
   useEffect(() => {
     return onAuthStateChanged(auth, (firebaseUser) => {
       setUser(firebaseUser ? mapFirebaseUser(firebaseUser) : null);
+      setIsAdmin(false);
+
       if (firebaseUser) {
         void ensureUserProfile(firebaseUser).catch(() => {
           // Profile persistence errors should not block authentication.
         });
+
+        void getDoc(doc(db, "admins", firebaseUser.uid))
+          .then((snapshot) => {
+            setIsAdmin(snapshot.exists() && snapshot.data()?.role === "admin");
+          })
+          .catch(() => {
+            setIsAdmin(false);
+          });
       }
     });
   }, []);
@@ -169,7 +181,7 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
   };
 
   return (
-    <AuthContext.Provider value={{ open: () => setOpen(true), openSignIn: () => { setOpen(true); }, user, updateUser, signOut }}>
+    <AuthContext.Provider value={{ open: () => setOpen(true), openSignIn: () => { setOpen(true); }, user, isAdmin, updateUser, signOut }}>
       {children}
       <AuthModal open={open} onClose={() => setOpen(false)} onAuthenticated={setUser} />
     </AuthContext.Provider>
