@@ -6,6 +6,7 @@ import { displayPhone, telHref, waLink } from "../lib/helpers";
 import { SocialLinks, useSettings } from "../components/Chrome";
 import { useQuote } from "../components/QuoteFlow";
 import { Button, Field, Input, Micro, Notice, RadioRow, Select, Textarea, usePageMeta } from "../components/ui";
+import { useAuth } from "../components/AuthFlow";
 
 const FURNITURE = [
   "Executive Desks",
@@ -28,6 +29,7 @@ export default function Contact() {
   );
   const settings = useSettings();
   const { open } = useQuote();
+  const { user, open: openAuth } = useAuth();
   const [status, setStatus] = useState<"idle" | "saving" | "success" | "error">("idle");
   const [form, setForm] = useState({
     fullName: "",
@@ -88,7 +90,17 @@ export default function Contact() {
       <section className="shell grid gap-12 py-14 sm:py-20 lg:grid-cols-12 lg:gap-16">
         {/* form */}
         <div className="lg:col-span-7">
-          {status === "success" ? (
+          {!user ? (
+            <div className="rounded-xl border border-line/70 bg-white p-8 sm:p-10 plate-shadow">
+              <Micro className="text-royal">Account required</Micro>
+              <h2 className="display mt-4 text-[clamp(2.2rem,5vw,3.4rem)]">Sign in to contact LUCOMI.</h2>
+              <p className="mt-4 max-w-lg text-[15px] leading-relaxed text-mute">
+                You can browse the full website and follow LUCOMI on social media without an account. To send a request,
+                request a quotation, or start a direct conversation, you must be signed in.
+              </p>
+              <Button className="mt-8" size="lg" onClick={openAuth}>Sign In / Create Account</Button>
+            </div>
+          ) : status === "success" ? (
             <div className="rounded-xl border border-line/70 bg-white p-8 sm:p-10 plate-shadow">
               <Micro className="text-royal">Enquiry sent</Micro>
               <h2 className="display mt-4 text-[clamp(2.2rem,5vw,3.4rem)]">Request Received</h2>
@@ -169,6 +181,22 @@ export default function Contact() {
 
         {/* details */}
         <aside className="lg:col-span-5">
+          {!user ? (
+            <div className="rounded-xl bg-plate p-7 sm:p-8">
+              <Micro className="text-ink">Direct contact is protected</Micro>
+              <h2 className="display mt-4 text-3xl">Create an account to reach us.</h2>
+              <p className="mt-3 text-[14.5px] leading-relaxed text-mute">
+                Sign in first to reveal LUCOMI's phone, email and WhatsApp contact options. Social profiles remain available
+                below so you can follow our work.
+              </p>
+              <Button className="mt-6" onClick={openAuth}>Get Started</Button>
+              <div className="mt-8 border-t border-line pt-6">
+                <Micro className="text-ink">Follow LUCOMI</Micro>
+                <SocialLinks settings={settings} tone="light" className="mt-3" />
+              </div>
+            </div>
+          ) : (
+            <>
           <div className="rounded-xl bg-plate p-7 sm:p-8">
             <Micro className="text-ink">LUCOMI Enterprise</Micro>
             <ul className="mt-6 space-y-6">
@@ -256,6 +284,8 @@ export default function Contact() {
               <WhatsAppIcon className="h-4 w-4" /> WhatsApp Us
             </Button>
           </div>
+            </>
+          )}
         </aside>
       </section>
     </>
