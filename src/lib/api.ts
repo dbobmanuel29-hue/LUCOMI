@@ -138,7 +138,6 @@ export const api = {
   enquiries: { list: () => wait([...enquiryStore]), create: (enquiry: Enquiry) => { enquiryStore = [enquiry, ...enquiryStore]; return wait(enquiry, 700); }, setStatus: (id: string, status: Enquiry["status"]) => { enquiryStore = enquiryStore.map((e) => (e.id === id ? { ...e, status } : e)); return wait(true, 250); }, remove: (id: string) => { enquiryStore = enquiryStore.filter((e) => e.id !== id); return wait(true, 300); } },
   team: { list: () => wait([...teamStore]), save: (member: TeamMember) => { const idx = teamStore.findIndex((m) => m.id === member.id); if (member.featured) teamStore = teamStore.map((m) => ({ ...m, featured: false })); if (idx >= 0) teamStore[idx] = member; else teamStore = [...teamStore, member]; return wait(member, 450); }, remove: (id: string) => { teamStore = teamStore.filter((m) => m.id !== id); return wait(true, 300); } },
   settings: { get: () => wait({ ...settingsStore }), save: (settings: BusinessSettings) => { settingsStore = { ...settings }; Object.assign(mock.businessSettings, settings); return wait(settingsStore, 600); } },
-  uploadImage: (fileName: string) => wait({ url: `images/${fileName}`, progress: 100 }, 1100),
 };
 export type AsyncState<T> = {
   data: T | null;
@@ -169,4 +168,50 @@ export function useAsync<T>(fn: () => Promise<T>, deps: unknown[] = []): AsyncSt
   }, [tick, ...deps]);
 
   return { ...state, reload: () => setTick((t) => t + 1) };
+}
+
+
+export function uploadToCloudinary(
+  file: File,
+  folder = "lucomi",
+  onProgress?: (progress: number) => void,
+): Promise<string> {
+  const cloudName = import.meta.env.VITE_CLOUDINARY_CLOUD_NAME as string | undefined;
+  const uploadPreset = import.meta.env.VITE_CLOUDINARY_UPLOAD_PRESET as string | undefined;
+
+  if (!cloudName || !uploadPreset) {
+    return Promise.reject(
+      new Error("Cloudinary is not configured yet. Add the Cloudinary cloud name and unsigned upload preset in Vercel."),
+    );
+  }
+
+  return new Promise((resolve, reject) => {
+    const xhr = new XMLHttpRequest();
+    const formData = new FormData();
+
+    formData.append("file", file);
+    formData.append("upload_preset", uploadPreset);
+    formData.append("folder", folder);
+
+    xhr.open("POST", `https://api.cloudinary.com/v1_1/${cloudName}/image/upload`);
+    xhr.responseType = "json";
+
+    xhr.upload.onprogress = (event) => {
+      if (event.lengthComputable) {
+        onProgress?.(Math.round((event.loaded / event.total) * 100));
+      }
+    };
+
+    xhr.onload = () => {
+      if (xhr.status >= 200 && xhr.status < 300 && xhr.response?.secure_url) {
+        resolve(xhr.response.secure_url as string);
+        return;
+      }
+      reject(new Error(xhr.response?.error?.message || "Cloudinary rejected the image upload."));
+    };
+
+    xhr.onerror = () => reject(new Error("Could not reach Cloudinary. Check your connection and try again."));
+    xhr.onabort = () => reject(new Error("Image upload was cancelled."));
+    xhr.send(formData);
+  });
 }
