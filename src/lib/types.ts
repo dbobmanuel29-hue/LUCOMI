@@ -62,6 +62,8 @@ export interface Project {
 
 export interface Testimonial {
   id: string;
+  /** Firebase Auth UID of the signed-in customer who submitted the review. */
+  userId?: string;
   customerName: string;
   company: string;
   content: string;
@@ -76,6 +78,8 @@ export interface Testimonial {
 
 export interface Enquiry {
   id: string;
+  /** Firebase Auth UID of the signed-in customer who submitted the enquiry. */
+  userId?: string;
   fullName: string;
   companyName: string;
   phone: string;
