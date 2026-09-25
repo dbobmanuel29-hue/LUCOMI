@@ -28,7 +28,7 @@ let enquiryStore: Enquiry[] = [...mock.enquiries];
 let teamStore: TeamMember[] = [...mock.team];
 let settingsStore: BusinessSettings = { ...mock.businessSettings };
 
-import { collection, deleteDoc, doc, getDoc, getDocs, query, setDoc, where } from "firebase/firestore";
+import { collection, deleteDoc, doc, getDoc, getDocs, query, setDoc, where, writeBatch } from "firebase/firestore";
 import { auth, db } from "./firebase";
 
 function asString(value: unknown, fallback = ""): string {
@@ -63,6 +63,31 @@ async function isCurrentAdmin() {
   const snapshot = await getDoc(doc(db, "admins", user.uid));
   return snapshot.exists() && snapshot.data()?.role === "admin";
 }
+export async function seedCatalogue() {
+  const [productsSnapshot, categoriesSnapshot] = await Promise.all([
+    getDocs(collection(db, "products")),
+    getDocs(collection(db, "categories")),
+  ]);
+
+  if (!productsSnapshot.empty || !categoriesSnapshot.empty) {
+    throw new Error("The Firebase catalogue already contains data. No seed was performed.");
+  }
+
+  const batch = writeBatch(db);
+  mock.categories.forEach((category) => {
+    batch.set(doc(db, "categories", category.id), category);
+  });
+  mock.products.forEach((product) => {
+    batch.set(doc(db, "products", product.id), product);
+  });
+  await batch.commit();
+
+  return {
+    categories: mock.categories.length,
+    products: mock.products.length,
+  };
+}
+
 export const api = {
   products: {
     list: async () => {
