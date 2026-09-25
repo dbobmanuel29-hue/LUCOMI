@@ -1,12 +1,17 @@
-import { useRef, useState } from "react";
+import { useEffect, useRef, useState } from "react";
 import { Link, Navigate } from "react-router-dom";
 import { Camera, LockKeyhole, Phone, Save, UserCircle, X } from "lucide-react";
 import { useAuth } from "../components/AuthFlow";
+import { doc, getDoc, Timestamp } from "firebase/firestore";
+import { db } from "../lib/firebase";
+import { uploadToCloudinary } from "../lib/api";
 import { Button, Field, Input, Micro, Notice, Reveal, usePageMeta } from "../components/ui";
 
 export default function Account() {
   usePageMeta("My Account — LUCOMI ENTERPRISE", "Manage your LUCOMI account details and preferences.");
-  const { user, updateUser, signOut } = useAuth();
+  const { user, isAdmin, updateUser, signOut } = useAuth();
+  const [profileImageChangedAt, setProfileImageChangedAt] = useState<Timestamp | null>(null);
+  const [imageUploading, setImageUploading] = useState(false);
   const [name, setName] = useState(user?.name ?? "");
   const [phone, setPhone] = useState(user?.phone ?? "");
   const [photoURL, setPhotoURL] = useState(user?.photoURL ?? "");
@@ -17,13 +22,32 @@ export default function Account() {
   const [imageError, setImageError] = useState("");
   const fileInputRef = useRef<HTMLInputElement>(null);
 
+  useEffect(() => {
+    if (!user) return;
+    void getDoc(doc(db, "users", user.uid)).then((snapshot) => {
+      const value = snapshot.data()?.profileImageChangedAt;
+      setProfileImageChangedAt(value instanceof Timestamp ? value : null);
+    }).catch(() => {});
+  }, [user?.uid]);
+
+  const profileImageLocked =
+    !isAdmin &&
+    !!profileImageChangedAt &&
+    new Date().getFullYear() === profileImageChangedAt.toDate().getFullYear() &&
+    new Date().getMonth() === profileImageChangedAt.toDate().getMonth();
+
   if (!user) return <Navigate to="/" replace />;
 
-  const handleImageChange = (event: React.ChangeEvent<HTMLInputElement>) => {
+  const handleImageChange = async (event: React.ChangeEvent<HTMLInputElement>) => {
     const file = event.target.files?.[0];
     if (!file) return;
 
     setImageError("");
+    if (profileImageLocked) {
+      setImageError("You can change your profile picture once per month. Please try again next month.");
+      event.target.value = "";
+      return;
+    }
     if (!file.type.startsWith("image/")) {
       setImageError("Please choose an image file.");
       return;
@@ -33,15 +57,17 @@ export default function Account() {
       return;
     }
 
-    const reader = new FileReader();
-    reader.onload = () => {
-      if (typeof reader.result === "string") {
-        setPhotoURL(reader.result);
-        setMessage("Profile image selected. Tap Save Profile to keep it.");
-      }
-    };
-    reader.onerror = () => setImageError("We couldn't read that image. Please try another file.");
-    reader.readAsDataURL(file);
+    setImageUploading(true);
+    try {
+      const url = await uploadToCloudinary(file, "lucomi/profiles");
+      setPhotoURL(url);
+      setMessage("Profile image uploaded. Tap Save Profile to keep it.");
+    } catch (error) {
+      setImageError(error instanceof Error ? error.message : "We couldn't upload that image. Please try again.");
+    } finally {
+      setImageUploading(false);
+      event.target.value = "";
+    }
   };
 
   const removeImage = () => {
@@ -141,11 +167,13 @@ export default function Account() {
                           onChange={handleImageChange}
                           className="sr-only"
                         />
-                        <Button type="button" variant="outline" onClick={() => fileInputRef.current?.click()}>
-                          <Camera className="h-4 w-4" /> Choose from device
+                        <Button type="button" variant="outline" disabled={profileImageLocked || imageUploading} onClick={() => fileInputRef.current?.click()}>
+                          <Camera className="h-4 w-4" /> {imageUploading ? "Uploading..." : profileImageLocked ? "Available next month" : "Choose from device"}
                         </Button>
                         <p className="mt-2 text-xs leading-relaxed text-mute">
-                          Select a photo directly from your phone, tablet or computer. PNG, JPG, WEBP or GIF, up to 3 MB.
+                          {profileImageLocked
+                            ? "Your profile picture has already been changed this month. You can choose another picture next month."
+                            : "Select a photo directly from your phone, tablet or computer. PNG, JPG, WEBP or GIF, up to 3 MB."}
                         </p>
                       </div>
                     </div>
