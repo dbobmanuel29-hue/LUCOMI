@@ -8,7 +8,7 @@ import type { Product } from "../lib/types";
 import { WhatsAppIcon } from "../components/BrandIcons";
 import { ProductTextPlate } from "../components/ProductCard";
 import { ReviewQuote } from "../components/ReviewQuote";
-import { useQuote } from "../components/QuoteFlow";
+import { useQuote, WhatsAppLink } from "../components/QuoteFlow";
 import { Button, ErrorState, Marquee, Micro, Reveal, SectionHead, Skeleton, usePageMeta } from "../components/ui";
 
 const HIGHLIGHTS = [
@@ -535,15 +535,9 @@ function CustomBand() {
             <Button href="/custom" size="lg">
               Start a Custom Project
             </Button>
-            <Button
-              variant="outline"
-              size="lg"
-              href={waLink("Hello LUCOMI ENTERPRISE, I have a custom furniture project I would like to discuss.")}
-              target="_blank"
-              rel="noopener noreferrer"
-            >
-              <WhatsAppIcon className="h-4 w-4" /> Talk to LUCOMI
-            </Button>
+            <WhatsAppLink message="Hello LUCOMI ENTERPRISE, I have a custom furniture project I would like to discuss." className="min-h-12 rounded-xl px-5">
+              Talk to LUCOMI
+            </WhatsAppLink>
           </div>
         </div>
       </div>
@@ -647,14 +641,9 @@ function SalesCTA() {
             <Button size="lg" variant="light" onClick={() => open("", "Quote Request")}>
               Request a Quote
             </Button>
-            <Button
-              size="lg"
-              href={waLink("Hello LUCOMI ENTERPRISE, I would like to discuss a furniture project.")}
-              target="_blank"
-              rel="noopener noreferrer"
-            >
-              <WhatsAppIcon className="h-4 w-4" /> Contact Us
-            </Button>
+            <WhatsAppLink message="Hello LUCOMI ENTERPRISE, I would like to discuss a furniture project." className="min-h-12 rounded-xl px-5">
+              Contact Us
+            </WhatsAppLink>
           </div>
         </Reveal>
       </div>
