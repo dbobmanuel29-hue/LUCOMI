@@ -2,7 +2,7 @@ import { createContext, useContext, useEffect, useState } from "react";
 import { Eye, EyeOff, LockKeyhole, Mail, User } from "lucide-react";
 import { Button, Field, Input, Modal, Notice } from "./ui";
 import { auth, db } from "../lib/firebase";
-import { doc, serverTimestamp, setDoc } from "firebase/firestore";
+import { doc, getDoc, serverTimestamp, setDoc, Timestamp } from "firebase/firestore";
 import {
   GoogleAuthProvider,
   User as FirebaseUser,
@@ -30,6 +30,7 @@ type AuthContextValue = {
   user: AuthUser | null;
   updateUser: (changes: Partial<AuthUser>) => Promise<void>;
   signOut: () => Promise<void>;
+  openSignIn: () => void;
 };
 
 const AuthContext = createContext<AuthContextValue>({
@@ -37,6 +38,7 @@ const AuthContext = createContext<AuthContextValue>({
   user: null,
   updateUser: async () => {},
   signOut: async () => {},
+  openSignIn: () => {},
 });
 
 export const useAuth = () => useContext(AuthContext);
@@ -86,9 +88,48 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
   const [open, setOpen] = useState(false);
   const [user, setUser] = useState<AuthUser | null>(null);
 
-  useEffect(() => onAuthStateChanged(auth, (firebaseUser) => {
-    setUser(firebaseUser ? mapFirebaseUser(firebaseUser) : null);
-  }), []);
+  const ensureUserProfile = async (firebaseUser: FirebaseUser) => {
+    const ref = doc(db, "users", firebaseUser.uid);
+    const snapshot = await getDoc(ref);
+    const creationDate = firebaseUser.metadata.creationTime
+      ? new Date(firebaseUser.metadata.creationTime)
+      : new Date();
+    const createdAt = Timestamp.fromDate(creationDate);
+    const retentionUntil = Timestamp.fromMillis(creationDate.getTime() + 365 * 24 * 60 * 60 * 1000);
+    const adminSnapshot = await getDoc(doc(db, "admins", firebaseUser.uid));
+    const isAdmin = adminSnapshot.exists() && adminSnapshot.data()?.role === "admin";
+
+    if (!snapshot.exists()) {
+      await setDoc(ref, {
+        uid: firebaseUser.uid,
+        name: firebaseUser.displayName || firebaseUser.email?.split("@")[0] || "LUCOMI User",
+        email: firebaseUser.email || "",
+        phone: firebaseUser.phoneNumber || "",
+        photoURL: firebaseUser.photoURL || "",
+        provider: firebaseUser.providerData.some((item) => item.providerId === "google.com") ? "google" : "email",
+        createdAt,
+        retentionUntil: isAdmin ? null : retentionUntil,
+        updatedAt: serverTimestamp(),
+      });
+    } else if (!snapshot.data()?.createdAt) {
+      await setDoc(ref, {
+        createdAt,
+        retentionUntil: isAdmin ? null : retentionUntil,
+        updatedAt: serverTimestamp(),
+      }, { merge: true });
+    }
+  };
+
+  useEffect(() => {
+    return onAuthStateChanged(auth, (firebaseUser) => {
+      setUser(firebaseUser ? mapFirebaseUser(firebaseUser) : null);
+      if (firebaseUser) {
+        void ensureUserProfile(firebaseUser).catch(() => {
+          // Profile persistence errors should not block authentication.
+        });
+      }
+    });
+  }, []);
 
   const updateUser = async (changes: Partial<AuthUser>) => {
     if (!auth.currentUser) throw new Error("You must be signed in to update your profile.");
@@ -128,7 +169,7 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
   };
 
   return (
-    <AuthContext.Provider value={{ open: () => setOpen(true), user, updateUser, signOut }}>
+    <AuthContext.Provider value={{ open: () => setOpen(true), openSignIn: () => { setOpen(true); }, user, updateUser, signOut }}>
       {children}
       <AuthModal open={open} onClose={() => setOpen(false)} onAuthenticated={setUser} />
     </AuthContext.Provider>
@@ -152,11 +193,70 @@ function AuthModal({
   const [name, setName] = useState("");
   const [email, setEmail] = useState("");
   const [password, setPassword] = useState("");
+  const [forgot, setForgot] = useState(false);
+  const [resetEmail, setResetEmail] = useState("");
+  const [resetBusy, setResetBusy] = useState(false);
+  const [resetMessage, setResetMessage] = useState("");
+  const [resetError, setResetError] = useState("");
 
   const switchMode = (next: AuthMode) => {
     setMode(next);
     setSubmitted(false);
     setError("");
+    setForgot(false);
+    setResetMessage("");
+    setResetError("");
+  };
+
+  const sendReset = async () => {
+    const normalized = resetEmail.trim().toLowerCase();
+    if (!normalized) {
+      setResetError("Enter your email address first.");
+      return;
+    }
+
+    const today = new Date().toISOString().slice(0, 10);
+    const storageKey = "lucomi-password-reset-limit";
+    let record: { date: string; count: number } = { date: today, count: 0 };
+    try {
+      const raw = localStorage.getItem(storageKey);
+      if (raw) {
+        const parsed = JSON.parse(raw) as { date?: string; count?: number };
+        if (parsed.date === today) record = { date: today, count: Number(parsed.count) || 0 };
+      }
+    } catch {
+      // Continue without local storage.
+    }
+
+    if (record.count >= 2) {
+      setResetError("You have used both password-reset requests for today. You can request another reset tomorrow.");
+      return;
+    }
+
+    setResetBusy(true);
+    setResetError("");
+    setResetMessage("");
+    try {
+      await import("firebase/auth").then(({ sendPasswordResetEmail }) =>
+        sendPasswordResetEmail(auth, normalized)
+      );
+      record = { date: today, count: record.count + 1 };
+      try {
+        localStorage.setItem(storageKey, JSON.stringify(record));
+      } catch {
+        // Storage may be unavailable; Firebase still handled the request.
+      }
+      setResetMessage("If an account exists for that email, a password-reset link has been sent. Please check your normal inbox and your Spam/Junk folder.");
+    } catch (resetErr) {
+      const code = (resetErr as { code?: string })?.code || "";
+      setResetError(
+        code === "auth/invalid-email"
+          ? "Please enter a valid email address."
+          : "We could not send the reset email right now. Please try again later."
+      );
+    } finally {
+      setResetBusy(false);
+    }
   };
 
   const authenticate = async (provider: "email" | "google") => {
@@ -195,7 +295,37 @@ function AuthModal({
       onClose={onClose}
       title={submitted ? "You're all set" : mode === "signup" ? "Create your LUCOMI account" : "Welcome back"}
     >
-      {submitted ? (
+      {forgot ? (
+        <div className="space-y-5">
+          <div>
+            <p className="text-sm leading-relaxed text-mute">
+              Enter the email linked to your LUCOMI account. You can request a password reset up to <strong>2 times per day</strong>.
+            </p>
+          </div>
+          <Field label="Email Address" required>
+            <Input
+              required
+              type="email"
+              value={resetEmail}
+              onChange={(e) => setResetEmail(e.target.value)}
+              placeholder="you@company.com"
+            />
+          </Field>
+          {resetMessage && <Notice title="Check your email">{resetMessage}</Notice>}
+          {resetError && <Notice tone="warn" title="Reset request not sent">{resetError}</Notice>}
+          <p className="rounded-lg bg-plate p-3 text-xs leading-relaxed text-mute">
+            If you do not see the password-reset email in your normal inbox, please check your <strong>Spam or Junk</strong> folder. Email providers sometimes place automated security emails there.
+          </p>
+          <div className="flex flex-col gap-3 sm:flex-row">
+            <Button full onClick={() => { setForgot(false); setResetError(""); setResetMessage(""); }}>
+              Back to Sign In
+            </Button>
+            <Button full disabled={resetBusy || !!resetMessage} onClick={() => void sendReset()}>
+              {resetBusy ? "Sending..." : "Send Reset Link"}
+            </Button>
+          </div>
+        </div>
+      ) : submitted ? (
         <div className="space-y-5">
           <Notice title="Signed in successfully">
             Your LUCOMI account is now active.
@@ -250,7 +380,18 @@ function AuthModal({
             {error && <Notice title="Sign-in issue">{error}</Notice>}
 
             {mode === "signin" && (
-              <button type="button" className="text-left text-xs font-semibold text-royal hover:underline">Forgot password?</button>
+              <button
+                type="button"
+                onClick={() => {
+                  setForgot(true);
+                  setResetEmail(email);
+                  setResetError("");
+                  setResetMessage("");
+                }}
+                className="text-left text-xs font-semibold text-royal hover:underline"
+              >
+                Forgot password?
+              </button>
             )}
 
             <Button full type="submit" size="lg" disabled={busy}>
