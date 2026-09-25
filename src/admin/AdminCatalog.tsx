@@ -53,7 +53,7 @@ export function AdminProducts() {
     <>
       <AdminPageHead
         title="Products"
-        description="Add, edit and publish catalogue products. Media uploads are prepared for Cloudinary; product records will be stored in Firestore."
+        description="Add, edit and publish catalogue products. Manage product details, publishing and catalogue media."
         action={
           <Button onClick={() => setEditing(blank(firstCategory))}>
             <Plus className="h-4 w-4" /> Add Product
