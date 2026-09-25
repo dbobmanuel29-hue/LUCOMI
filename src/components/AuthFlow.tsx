@@ -184,15 +184,34 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
       await updateProfile(current, { displayName: changes.name.trim() });
     }
 
-    // Keep profile data in Firestore. Profile images will move to Cloudinary
-    // in the media phase; do not store large device Data URLs in Firestore.
-    await setDoc(doc(db, "users", current.uid), {
+    const profileRef = doc(db, "users", current.uid);
+    const profileSnapshot = await getDoc(profileRef);
+    const existingPhotoURL = profileSnapshot.data()?.photoURL || current.photoURL || "";
+    const photoChanged =
+      changes.photoURL !== undefined &&
+      changes.photoURL !== existingPhotoURL;
+
+    if (photoChanged && !isAdmin) {
+      const lastChanged = profileSnapshot.data()?.profileImageChangedAt as Timestamp | undefined;
+      if (lastChanged) {
+        const sameCalendarMonth =
+          new Date().getFullYear() === lastChanged.toDate().getFullYear() &&
+          new Date().getMonth() === lastChanged.toDate().getMonth();
+
+        if (sameCalendarMonth) {
+          throw new Error("You can change your profile picture once per month. Please try again next month.");
+        }
+      }
+    }
+
+    await setDoc(profileRef, {
       uid: current.uid,
       name: nextName,
       email: current.email || "",
       phone: nextPhone,
-      photoURL: changes.photoURL && !changes.photoURL.startsWith("data:") ? changes.photoURL : (current.photoURL || ""),
+      photoURL: changes.photoURL && !changes.photoURL.startsWith("data:") ? changes.photoURL : existingPhotoURL,
       provider: current.providerData.some((item) => item.providerId === "google.com") ? "google" : "email",
+      ...(photoChanged ? { profileImageChangedAt: serverTimestamp() } : {}),
       updatedAt: serverTimestamp(),
     }, { merge: true });
 
