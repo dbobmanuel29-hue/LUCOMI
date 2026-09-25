@@ -5,6 +5,7 @@ import { IMG } from "../lib/mock";
 import { cn } from "../lib/helpers";
 import { ReviewQuote } from "../components/ReviewQuote";
 import { Button, ErrorState, Field, Input, Micro, Notice, Reveal, Skeleton, Textarea, usePageMeta } from "../components/ui";
+import { useAuth } from "../components/AuthFlow";
 
 const STEPS = [
   ["01", "Share your experience", "Tell us what you ordered and how it works in your space."],
@@ -19,6 +20,7 @@ export default function Reviews() {
   );
 
   const { data, loading, error, reload } = useAsync(() => api.testimonials.list());
+  const { user, open: openAuth } = useAuth();
   const reviewsToShow = (data ?? []).filter((item) => item.published);
   const [form, setForm] = useState({ customerName: "", customerEmail: "", company: "", product: "", content: "" });
   const [rating, setRating] = useState(0);
@@ -32,6 +34,7 @@ export default function Reviews() {
     try {
       await api.testimonials.save({
         id: `review-${Date.now()}`,
+        userId: user?.uid,
         customerName: form.customerName.trim(),
         customerEmail: form.customerEmail.trim(),
         company: form.company.trim(),
@@ -63,7 +66,10 @@ export default function Reviews() {
             submissions are reviewed before they appear here.
           </p>
           <div className="md:col-span-4 md:col-start-9 md:text-right">
-            <Button onClick={() => document.getElementById("share-review")?.scrollIntoView({ behavior: "smooth" })} variant="outline">
+            <Button onClick={() => {
+              document.getElementById("share-review")?.scrollIntoView({ behavior: "smooth" });
+              if (!user) openAuth();
+            }} variant="outline">
               Share your experience <ArrowRight className="h-4 w-4" />
             </Button>
           </div>
@@ -163,6 +169,13 @@ export default function Reviews() {
                 }}>
                   Share another review
                 </Button>
+              </div>
+            ) : !user ? (
+              <div className="border-t border-line pt-8">
+                <Notice title="Sign in required">
+                  You need a LUCOMI account to submit a review. You can still read all published reviews without signing in.
+                </Notice>
+                <Button className="mt-6" onClick={openAuth}>Sign In / Create Account</Button>
               </div>
             ) : (
               <form onSubmit={submit} className="space-y-6 border-t border-line pt-8">
