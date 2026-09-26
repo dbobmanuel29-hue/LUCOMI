@@ -156,8 +156,11 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
         // Resolve the admin role immediately so admin-only navigation controls can
         // render alongside the rest of the header instead of arriving a moment later.
         void getDoc(doc(db, "admins", firebaseUser.uid))
-          .then((snapshot) => {
+          .then(async (snapshot) => {
             const adminStatus = snapshot.exists() && snapshot.data()?.role === "admin";
+
+            // Admin access is determined only by the admins/{uid} document.
+            // Profile synchronization must never revoke an already-confirmed admin role.
             setIsAdmin(adminStatus);
             try {
               if (adminStatus) {
@@ -168,25 +171,35 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
             } catch {
               // Session storage is only a visual startup hint, never a security boundary.
             }
-            return ensureUserProfile(firebaseUser, adminStatus);
-          })
-          .then(async () => {
-            const profileSnapshot = await getDoc(doc(db, "users", firebaseUser.uid));
-            const profile = profileSnapshot.data();
 
-            setUser((current) => current ? {
-              ...current,
-              name: typeof profile?.name === "string" && profile.name.trim()
-                ? profile.name
-                : current.name,
-              phone: typeof profile?.phone === "string" ? profile.phone : current.phone,
-              photoURL: typeof profile?.photoURL === "string" && profile.photoURL
-                ? profile.photoURL
-                : current.photoURL,
-            } : current);
+            try {
+              await ensureUserProfile(firebaseUser, adminStatus);
+
+              const profileSnapshot = await getDoc(doc(db, "users", firebaseUser.uid));
+              const profile = profileSnapshot.data();
+
+              setUser((current) => current ? {
+                ...current,
+                name: typeof profile?.name === "string" && profile.name.trim()
+                  ? profile.name
+                  : current.name,
+                phone: typeof profile?.phone === "string" ? profile.phone : current.phone,
+                photoURL: typeof profile?.photoURL === "string" && profile.photoURL
+                  ? profile.photoURL
+                  : current.photoURL,
+              } : current);
+            } catch {
+              // A customer-profile read/write failure must not change admin access.
+            }
           })
           .catch(() => {
+            // If the admin document itself cannot be read, admin status cannot be confirmed.
             setIsAdmin(false);
+            try {
+              sessionStorage.removeItem("lucomi-admin-ui-uid");
+            } catch {
+              // Storage unavailable.
+            }
           });
 
         heartbeat = window.setInterval(() => {
