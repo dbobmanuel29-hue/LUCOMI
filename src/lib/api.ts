@@ -147,6 +147,7 @@ function enquiryFromDoc(id: string, data: Record<string, unknown>): Enquiry {
     furnitureType: asString(data.furnitureType),
     quantity: asString(data.quantity),
     description: asString(data.description),
+    images: asStringArray(data.images),
     preferredContact:
       data.preferredContact === "Email" || data.preferredContact === "WhatsApp"
         ? data.preferredContact
@@ -506,6 +507,19 @@ export const api = {
 
     remove: async (id: string) => {
       await deleteDoc(doc(db, "enquiries", id));
+
+      // Remove the admin notification tied to the deleted enquiry as well,
+      // so deleting an enquiry removes its notification trail from the dashboard.
+      const notificationSnapshot = await getDocs(
+        query(collection(db, "notifications"), where("sourceId", "==", id)),
+      );
+      if (!notificationSnapshot.empty) {
+        const batch = writeBatch(db);
+        notificationSnapshot.docs.forEach((item) => batch.delete(item.ref));
+        await batch.commit();
+      }
+
+      notifyDataChanged();
       return true;
     },
   },
