@@ -84,8 +84,6 @@ export default function Account() {
       setPhotoURL(user?.photoURL ?? "");
       setImageError(error instanceof Error ? error.message : "We couldn't upload that image. Please try again.");
     } finally {
-      setImageError(error instanceof Error ? error.message : "We couldn't upload that image. Please try again.");
-    } finally {
       setImageUploading(false);
       event.target.value = "";
     }
