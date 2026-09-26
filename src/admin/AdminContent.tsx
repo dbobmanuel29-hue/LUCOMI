@@ -573,6 +573,20 @@ export function AdminEnquiries() {
                     <Mail className="h-3.5 w-3.5" />
                   </a>
                 )}
+                <button
+                  type="button"
+                  onClick={async () => {
+                    if (!window.confirm(`Delete the enquiry from ${e.fullName} permanently? This will also remove its admin notification.`)) return;
+                    await api.enquiries.remove(e.id);
+                    if (active?.id === e.id) setActive(null);
+                    reload();
+                  }}
+                  aria-label={`Delete enquiry from ${e.fullName}`}
+                  title="Delete enquiry permanently"
+                  className="rounded-full border border-line p-2 text-mute hover:border-royal hover:text-royal"
+                >
+                  <Trash2 className="h-3.5 w-3.5" />
+                </button>
               </span>
             </Cell>
           </RowShell>
@@ -593,6 +607,29 @@ export function AdminEnquiries() {
             <Field label="Description">
               <Textarea value={active.description} readOnly />
             </Field>
+            {active.images.length > 0 && (
+              <div>
+                <Micro className="text-ink">Reference Images</Micro>
+                <div className="mt-3 grid grid-cols-2 gap-3 sm:grid-cols-3">
+                  {active.images.map((image, index) => (
+                    <a
+                      key={image}
+                      href={image}
+                      target="_blank"
+                      rel="noopener noreferrer"
+                      className="group overflow-hidden rounded-lg border border-line bg-plate"
+                      aria-label={`Open reference image ${index + 1}`}
+                    >
+                      <img
+                        src={image}
+                        alt={`Customer reference ${index + 1}`}
+                        className="aspect-[4/3] w-full object-cover transition-transform duration-300 group-hover:scale-[1.03]"
+                      />
+                    </a>
+                  ))}
+                </div>
+              </div>
+            )}
             <div className="flex flex-wrap gap-3 rounded-lg bg-plate px-5 py-4 text-[13.5px]">
               <span>Source: {active.source}</span>
               <span>·</span>
