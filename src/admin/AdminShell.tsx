@@ -15,8 +15,11 @@ import {
   X,
   ArrowLeft,
   RefreshCw,
+  Bell,
+  Check,
 } from "lucide-react";
 import { api, useAsync } from "../lib/api";
+import type { AdminNotification } from "../lib/types";
 import { auth, db } from "../lib/firebase";
 import { doc, getDoc } from "firebase/firestore";
 import { GoogleAuthProvider, signInWithEmailAndPassword, signInWithPopup } from "firebase/auth";
@@ -138,6 +141,93 @@ export function AdminLogin() {
 }
 
 /* ------------------------------- layout ------------------------------- */
+export function AdminNotifications() {
+  const [notifications, setNotifications] = useState<AdminNotification[]>([]);
+  const [open, setOpen] = useState(false);
+  const navigate = useNavigate();
+
+  useEffect(() => api.notifications.subscribe(setNotifications), []);
+
+  const unread = notifications.filter((item) => !item.read);
+  const openNotification = async (item: AdminNotification) => {
+    if (!item.read) {
+      await api.notifications.markRead(item.id);
+    }
+    setOpen(false);
+    navigate(item.link);
+  };
+
+  return (
+    <div className="relative">
+      <button
+        type="button"
+        onClick={() => setOpen((value) => !value)}
+        className="relative flex h-10 w-10 items-center justify-center rounded-lg border border-line bg-white text-ink transition-colors hover:border-ink/40"
+        aria-label={unread.length ? `${unread.length} unread notifications` : "Notifications"}
+        aria-expanded={open}
+      >
+        <Bell className="h-4.5 w-4.5" />
+        {unread.length > 0 && (
+          <span className="absolute -right-1 -top-1 flex min-h-5 min-w-5 items-center justify-center rounded-full bg-royal px-1 text-[10px] font-bold text-white ring-2 ring-paper">
+            {unread.length > 99 ? "99+" : unread.length}
+          </span>
+        )}
+      </button>
+
+      {open && (
+        <>
+          <button className="fixed inset-0 z-40 cursor-default" aria-label="Close notifications" onClick={() => setOpen(false)} />
+          <div className="absolute right-0 top-12 z-50 w-[min(360px,calc(100vw-2rem))] overflow-hidden rounded-xl border border-line bg-white plate-shadow-lg">
+            <div className="flex items-center justify-between border-b border-line px-4 py-3">
+              <div>
+                <p className="text-sm font-semibold text-ink">Notifications</p>
+                <p className="mt-0.5 text-[11.5px] text-mute">{unread.length ? `${unread.length} unread` : "You're all caught up"}</p>
+              </div>
+              {unread.length > 0 && (
+                <button
+                  type="button"
+                  className="micro text-royal hover:text-ink"
+                  onClick={() => void api.notifications.markAllRead(unread.map((item) => item.id))}
+                >
+                  Mark all read
+                </button>
+              )}
+            </div>
+            <div className="max-h-[420px] overflow-y-auto">
+              {notifications.length === 0 ? (
+                <div className="px-5 py-10 text-center">
+                  <Bell className="mx-auto h-6 w-6 text-mute" />
+                  <p className="mt-3 text-sm font-semibold">No notifications yet</p>
+                  <p className="mt-1 text-[12.5px] text-mute">New enquiries and customer reviews will appear here.</p>
+                </div>
+              ) : (
+                notifications.slice(0, 30).map((item) => (
+                  <button
+                    key={item.id}
+                    type="button"
+                    onClick={() => void openNotification(item)}
+                    className={cn("flex w-full gap-3 border-b border-line px-4 py-3 text-left transition-colors hover:bg-plate", !item.read && "bg-royal/[0.045]")}
+                  >
+                    <span className={cn("mt-0.5 flex h-8 w-8 shrink-0 items-center justify-center rounded-full", item.type === "review" ? "bg-royal/10 text-royal" : "bg-ink/5 text-ink")}>
+                      {item.read ? <Check className="h-4 w-4" /> : <Bell className="h-4 w-4" />}
+                    </span>
+                    <span className="min-w-0 flex-1">
+                      <span className={cn("block text-[13px]", !item.read ? "font-semibold text-ink" : "font-medium text-charcoal")}>{item.title}</span>
+                      <span className="mt-1 block text-[12px] leading-relaxed text-mute">{item.message}</span>
+                      <span className="mt-1.5 block text-[10.5px] uppercase tracking-[0.08em] text-mute">{new Date(item.createdAt).toLocaleString()}</span>
+                    </span>
+                    {!item.read && <span className="mt-2 h-2 w-2 shrink-0 rounded-full bg-royal" />}
+                  </button>
+                ))
+              )}
+            </div>
+          </div>
+        </>
+      )}
+    </div>
+  );
+}
+
 export function AdminLayout() {
   const [openMenu, setOpenMenu] = useState(false);
   const [access, setAccess] = useState<"checking" | "allowed" | "denied">("checking");
@@ -261,6 +351,7 @@ export function AdminLayout() {
           <Micro className="hidden text-ink lg:block">LUCOMI Enterprise — Content Manager</Micro>
           <div className="flex items-center gap-3">
             <Link to="/" className="micro hidden text-mute hover:text-ink sm:block">View website</Link>
+            <AdminNotifications />
             <ThemeToggle />
             <button onClick={() => setOpenMenu(true)} className="flex h-10 w-10 items-center justify-center rounded-lg border border-line bg-white lg:hidden" aria-label="Open admin menu">
               <Menu className="h-5 w-5" />
