@@ -88,6 +88,61 @@ export async function seedCatalogue() {
   };
 }
 
+function projectFromDoc(id: string, data: Record<string, unknown>): Project {
+  return {
+    id, slug: asString(data.slug), name: asString(data.name), category: asString(data.category),
+    description: asString(data.description), location: asString(data.location),
+    images: asStringArray(data.images), published: data.published === true,
+    placeholder: data.placeholder === true, createdAt: asString(data.createdAt, new Date().toISOString().slice(0, 10)),
+  };
+}
+
+function testimonialFromDoc(id: string, data: Record<string, unknown>): Testimonial {
+  return {
+    id, userId: asString(data.userId) || undefined, customerName: asString(data.customerName),
+    company: asString(data.company), content: asString(data.content), image: asString(data.image),
+    rating: typeof data.rating === "number" ? data.rating : undefined,
+    product: asString(data.product) || undefined, customerEmail: asString(data.customerEmail) || undefined,
+    published: data.published === true, placeholder: data.placeholder === true,
+    createdAt: asString(data.createdAt, new Date().toISOString().slice(0, 10)),
+  };
+}
+
+function enquiryFromDoc(id: string, data: Record<string, unknown>): Enquiry {
+  const preferred = asString(data.preferredContact, "Email");
+  return {
+    id, userId: asString(data.userId) || undefined, fullName: asString(data.fullName),
+    companyName: asString(data.companyName), phone: asString(data.phone), email: asString(data.email),
+    furnitureType: asString(data.furnitureType), quantity: asString(data.quantity),
+    description: asString(data.description),
+    preferredContact: preferred === "Phone" || preferred === "WhatsApp" ? preferred : "Email",
+    source: asString(data.source, "Contact Form") as Enquiry["source"],
+    status: asString(data.status, "New") as Enquiry["status"],
+    createdAt: asString(data.createdAt, new Date().toISOString().slice(0, 10)),
+  };
+}
+
+function teamFromDoc(id: string, data: Record<string, unknown>): TeamMember {
+  return {
+    id, name: asString(data.name), role: asString(data.role), image: asString(data.image),
+    bio: asString(data.bio), focus: asStringArray(data.focus), featured: data.featured === true,
+  };
+}
+
+function settingsFromDoc(data: Record<string, unknown>): BusinessSettings {
+  const socialData = (data.social && typeof data.social === "object" ? data.social : {}) as Record<string, unknown>;
+  return {
+    companyName: asString(data.companyName), tagline: asString(data.tagline), logoUrl: asString(data.logoUrl),
+    phone: asStringArray(data.phone), email: asString(data.email), address: asString(data.address),
+    whatsapp: asString(data.whatsapp), businessHours: asString(data.businessHours),
+    social: {
+      facebook: asString(socialData.facebook), instagram: asString(socialData.instagram),
+      tiktok: asString(socialData.tiktok), twitter: asString(socialData.twitter),
+    },
+    aboutIntro: asString(data.aboutIntro),
+  };
+}
+
 export const api = {
   products: {
     list: async () => {
