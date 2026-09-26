@@ -51,7 +51,7 @@ export function Reveal({
       initial={initial}
       whileInView={whileInView}
       viewport={{ once: true, margin: "-70px" }}
-      transition={{ duration: 0.7, delay, ease: [0.22, 0.61, 0.36, 1] }}
+      transition={{ duration: reduce ? 0 : 0.46, delay: reduce ? 0 : Math.min(delay, 0.18), ease: [0.22, 0.61, 0.36, 1] }}
     >
       {children}
     </motion.div>
@@ -113,7 +113,7 @@ export function Accordion({ items }: { items: { q: string; a: string }[] }) {
                   initial={{ height: 0, opacity: 0 }}
                   animate={{ height: "auto", opacity: 1 }}
                   exit={{ height: 0, opacity: 0 }}
-                  transition={{ duration: 0.32, ease: [0.22, 0.61, 0.36, 1] }}
+                  transition={{ duration: 0.22, ease: [0.22, 0.61, 0.36, 1] }}
                   className="overflow-hidden"
                 >
                   <p className="max-w-3xl pb-6 pr-10 text-[15px] leading-relaxed text-mute">{item.a}</p>
