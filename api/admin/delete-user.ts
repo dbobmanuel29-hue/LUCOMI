@@ -30,7 +30,13 @@ function getAdminApp() {
   });
 }
 
-async function requireAdmin(request: ApiRequest): Promise<{ adminAuth: ReturnType<typeof getAuth>; adminDb: Firestore; callerUid: string }> {
+async function requireAdmin(
+  request: ApiRequest,
+): Promise<{
+  adminAuth: ReturnType<typeof getAuth>;
+  adminDb: Firestore;
+  callerUid: string;
+}> {
   const header = request.headers.authorization || "";
   if (!header.startsWith("Bearer ")) {
     throw new Error("Missing authorization token.");
@@ -80,6 +86,21 @@ async function deleteCustomerFirestoreData(adminDb: Firestore, uid: string): Pro
   return deletedRecords + 1;
 }
 
+function getErrorDetails(error: unknown): { code: string; message: string } {
+  if (typeof error === "object" && error !== null) {
+    const candidate = error as { code?: unknown; message?: unknown };
+    return {
+      code: typeof candidate.code === "string" ? candidate.code : "",
+      message:
+        typeof candidate.message === "string"
+          ? candidate.message
+          : "The user could not be deleted.",
+    };
+  }
+
+  return { code: "", message: "The user could not be deleted." };
+}
+
 export default async function handler(request: ApiRequest, response: ApiResponse) {
   if (request.method !== "POST") {
     response.setHeader("Allow", "POST");
@@ -88,7 +109,11 @@ export default async function handler(request: ApiRequest, response: ApiResponse
 
   try {
     const { adminAuth, adminDb, callerUid } = await requireAdmin(request);
-    const uid = typeof request.body?.uid === "string" ? request.body.uid.trim() : "";
+    const body =
+      typeof request.body === "object" && request.body !== null
+        ? (request.body as { uid?: unknown })
+        : {};
+    const uid = typeof body.uid === "string" ? body.uid.trim() : "";
 
     if (!uid) return response.status(400).json({ error: "A user UID is required." });
     if (uid === callerUid) {
@@ -103,9 +128,6 @@ export default async function handler(request: ApiRequest, response: ApiResponse
     const target = await adminAuth.getUser(uid);
     const deletedRecords = await deleteCustomerFirestoreData(adminDb, uid);
 
-    // Delete the Authentication identity only after its Firestore profile/history
-    // has been removed. If Auth deletion fails, the Firestore data remains gone
-    // and the admin can retry the Auth deletion safely.
     await adminAuth.deleteUser(uid);
 
     await adminDb.collection("auditLogs").add({
@@ -123,9 +145,8 @@ export default async function handler(request: ApiRequest, response: ApiResponse
       email: target.email || "",
       deletedRecords,
     });
-  } catch (error) {
-    const code = error?.code || "";
-    const message = error?.message || "The user could not be deleted.";
+  } catch (error: unknown) {
+    const { code, message } = getErrorDetails(error);
 
     if (code === "auth/user-not-found") {
       return response.status(404).json({ error: "That Firebase Authentication user no longer exists." });
@@ -138,6 +159,8 @@ export default async function handler(request: ApiRequest, response: ApiResponse
     }
 
     console.error("LUCOMI admin delete user error:", error);
-    return response.status(500).json({ error: "The user could not be deleted. Check the server configuration and Vercel logs." });
+    return response.status(500).json({
+      error: "The user could not be deleted. Check the server configuration and Vercel logs.",
+    });
   }
 }
