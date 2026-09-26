@@ -158,8 +158,14 @@ export function SiteAdminNotifications() {
   };
 
   return (
-    <div ref={notificationRef} className="relative">
-      <button
+    <motion.div
+      ref={notificationRef}
+      className="relative"
+      initial={{ opacity: 0, scale: 0.92, y: -3 }}
+      animate={{ opacity: 1, scale: 1, y: 0 }}
+      transition={{ duration: 0.24, ease: [0.22, 0.61, 0.36, 1] }}
+    >
+      <motion.button
         type="button"
         onClick={() => setOpen((value) => !value)}
         className={cn(
@@ -169,17 +175,37 @@ export function SiteAdminNotifications() {
         aria-label={unread.length ? `${unread.length} unread admin notifications` : "Admin notifications"}
         aria-expanded={open}
         title={unread.length ? `${unread.length} unread notification${unread.length === 1 ? "" : "s"}` : "Admin notifications"}
+        whileTap={{ scale: 0.92 }}
+        whileHover={{ scale: 1.04 }}
+        transition={{ type: "spring", stiffness: 420, damping: 22 }}
       >
-        <Bell className="h-4.5 w-4.5" />
+        <motion.span
+          animate={unread.length ? { rotate: [0, -8, 8, -5, 0] } : { rotate: 0 }}
+          transition={unread.length ? { duration: 0.55, ease: "easeOut" } : { duration: 0.15 }}
+          className="flex"
+        >
+          <Bell className="h-4.5 w-4.5" />
+        </motion.span>
         {unread.length > 0 && (
-          <span className="absolute -right-1 -top-1 flex min-h-5 min-w-5 items-center justify-center rounded-full bg-royal px-1 text-[10px] font-bold text-white ring-2 ring-paper">
+          <motion.span
+            initial={{ scale: 0, opacity: 0 }}
+            animate={{ scale: 1, opacity: 1 }}
+            transition={{ type: "spring", stiffness: 500, damping: 24 }}
+            className="absolute -right-1 -top-1 flex min-h-5 min-w-5 items-center justify-center rounded-full bg-royal px-1 text-[10px] font-bold text-white ring-2 ring-paper"
+          >
             {unread.length > 99 ? "99+" : unread.length}
-          </span>
+          </motion.span>
         )}
-      </button>
+      </motion.button>
 
+      <AnimatePresence>
       {open && (
-        <div className="fixed inset-x-3 top-[72px] z-[100] overflow-hidden rounded-xl border border-line bg-paper plate-shadow-lg sm:absolute sm:inset-x-auto sm:right-0 sm:top-12 sm:w-[390px]">
+        <motion.div
+          initial={{ opacity: 0, y: -8, scale: 0.98 }}
+          animate={{ opacity: 1, y: 0, scale: 1 }}
+          exit={{ opacity: 0, y: -6, scale: 0.985 }}
+          transition={{ duration: 0.18, ease: [0.22, 0.61, 0.36, 1] }}
+          className="fixed inset-x-3 top-[72px] z-[100] overflow-hidden rounded-xl border border-line bg-paper plate-shadow-lg sm:absolute sm:inset-x-auto sm:right-0 sm:top-12 sm:w-[390px]">
           <div className="flex items-start justify-between gap-3 border-b border-line px-4 py-3">
             <div>
               <p className="text-sm font-semibold text-ink">Admin notifications</p>
@@ -253,9 +279,10 @@ export function SiteAdminNotifications() {
               ))
             )}
           </div>
-        </div>
+        </motion.div>
       )}
-    </div>
+      </AnimatePresence>
+    </motion.div>
   );
 }
 
