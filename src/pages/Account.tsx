@@ -18,6 +18,7 @@ export default function Account() {
   const [currentPassword, setCurrentPassword] = useState("");
   const [newPassword, setNewPassword] = useState("");
   const [message, setMessage] = useState("");
+  const [saveConfirmation, setSaveConfirmation] = useState(false);
   const [saving, setSaving] = useState(false);
   const [imageError, setImageError] = useState("");
   const fileInputRef = useRef<HTMLInputElement>(null);
@@ -53,6 +54,7 @@ export default function Account() {
     if (!file) return;
 
     setImageError("");
+    setSaveConfirmation(false);
     if (profileImageLocked) {
       setImageError("You can change your profile picture once per month. Please try again next month.");
       event.target.value = "";
@@ -90,6 +92,7 @@ export default function Account() {
   };
 
   const removeImage = () => {
+    setSaveConfirmation(false);
     setPhotoURL("");
     if (fileInputRef.current) fileInputRef.current.value = "";
     setMessage("Profile image removed. Tap Save Profile to confirm.");
@@ -98,6 +101,7 @@ export default function Account() {
   const saveProfile = async (event: React.FormEvent) => {
     event.preventDefault();
     setSaving(true);
+    setSaveConfirmation(false);
     setMessage("");
 
     try {
@@ -114,15 +118,19 @@ export default function Account() {
       });
       if (profileImageChanged && photoURL) {
         if (!isAdmin) setProfileImageChangedAt(Timestamp.now());
-        setMessage("Profile picture updated successfully. Your profile has been saved.");
+        setMessage("Your profile picture has been updated successfully. Your profile has been saved.");
+        setSaveConfirmation(true);
       } else if (profileImageChanged && !photoURL) {
         if (!isAdmin) setProfileImageChangedAt(Timestamp.now());
-        setMessage("Profile picture removed successfully. Your profile has been saved.");
+        setMessage("Your profile picture has been removed successfully. Your profile has been saved.");
+        setSaveConfirmation(true);
       } else {
-        setMessage("Profile updated successfully. Your changes have been saved.");
+        setMessage("Your profile has been updated successfully. Your changes have been saved.");
+        setSaveConfirmation(true);
       }
     } catch (error) {
       console.error("Profile save failed:", error);
+      setSaveConfirmation(false);
       setMessage("We couldn't save your profile. Please try again.");
     } finally {
       setSaving(false);
@@ -156,7 +164,7 @@ export default function Account() {
       <section className="shell pb-24 pt-12">
         <div className="grid gap-8 lg:grid-cols-12">
           <div className="space-y-8 lg:col-span-8">
-            {message && <Notice title="Profile updated successfully">{message}</Notice>}
+            {saveConfirmation && message && <Notice title="Profile updated successfully">{message}</Notice>}
             {imageError && <Notice title="Image upload">{imageError}</Notice>}
 
             <Reveal>
