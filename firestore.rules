@@ -185,13 +185,13 @@ service cloud.firestore {
             (
               request.resource.data.type == "enquiry"
               && exists(/databases/$(database)/documents/enquiries/$(request.resource.data.sourceId))
-              && get(/databases/$(database)/documents/enquiries/$(request.resource.data.sourceId)).data.userId == request.auth.uid
+              && get(/databases/$(database)/documents/enquiries/$(request.resource.data.sourceId)).data.get("userId", "") == request.auth.uid
             )
             ||
             (
               request.resource.data.type == "review"
               && exists(/databases/$(database)/documents/testimonials/$(request.resource.data.sourceId))
-              && get(/databases/$(database)/documents/testimonials/$(request.resource.data.sourceId)).data.userId == request.auth.uid
+              && get(/databases/$(database)/documents/testimonials/$(request.resource.data.sourceId)).data.get("userId", "") == request.auth.uid
             )
           )
         );
