@@ -607,11 +607,11 @@ export function AdminEnquiries() {
             <Field label="Description">
               <Textarea value={active.description} readOnly />
             </Field>
-            {active.images.length > 0 && (
+            {(active.images ?? []).length > 0 && (
               <div>
                 <Micro className="text-ink">Reference Images</Micro>
                 <div className="mt-3 grid grid-cols-2 gap-3 sm:grid-cols-3">
-                  {active.images.map((image, index) => (
+                  {(active.images ?? []).map((image, index) => (
                     <a
                       key={image}
                       href={image}
