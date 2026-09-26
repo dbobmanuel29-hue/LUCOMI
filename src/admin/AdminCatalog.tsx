@@ -35,12 +35,17 @@ export function AdminProducts() {
   const [saving, setSaving] = useState(false);
   const [notice, setNotice] = useState<string | null>(null);
   const [confirm, setConfirm] = useState<Product | null>(null);
+  const [variationDraft, setVariationDraft] = useState("");
   const firstCategory = (categories.data ?? [])[0]?.slug ?? "executive-desks";
 
   const save = async () => {
     if (!editing) return;
     setSaving(true);
-    await api.products.save({ ...editing, updatedAt: new Date().toISOString().slice(0, 10) });
+    const variations = variationDraft
+      .split(",")
+      .map((value) => value.trim())
+      .filter(Boolean);
+    await api.products.save({ ...editing, variations, updatedAt: new Date().toISOString().slice(0, 10) });
     setSaving(false);
     setEditing(null);
     setNotice("Product saved successfully.");
@@ -55,7 +60,11 @@ export function AdminProducts() {
         title="Products"
         description="Add, edit and publish catalogue products. Manage product details, publishing and catalogue media."
         action={
-          <Button onClick={() => setEditing(blank(firstCategory))}>
+          <Button onClick={() => {
+            const product = blank(firstCategory);
+            setVariationDraft("");
+            setEditing(product);
+          }}>
             <Plus className="h-4 w-4" /> Add Product
           </Button>
         }
@@ -124,7 +133,10 @@ export function AdminProducts() {
                   <Star className="h-3.5 w-3.5" />
                 </button>
                 <button
-                  onClick={() => setEditing(p)}
+                  onClick={() => {
+                    setVariationDraft(p.variations.join(", "));
+                    setEditing(p);
+                  }}
                   aria-label={`Edit ${p.name}`}
                   className="rounded-full border border-line p-2 hover:border-ink"
                 >
@@ -210,11 +222,14 @@ export function AdminProducts() {
                 </Field>
               </div>
             </div>
-            <Field label="Variations" hint="comma separated">
+            <Field
+              label="Variations"
+              hint="Separate each option with a comma. Spaces inside an option are allowed."
+            >
               <Input
-                value={editing.variations.join(", ")}
-                onChange={(e) => patch({ variations: e.target.value.split(",").map((v) => v.trim()).filter(Boolean) })}
-                placeholder="Walnut / White laminate, Left-hand pedestal"
+                value={variationDraft}
+                onChange={(e) => setVariationDraft(e.target.value)}
+                placeholder="Walnut, White laminate, Left-hand pedestal"
               />
             </Field>
 
@@ -245,7 +260,10 @@ export function AdminProducts() {
               <Button onClick={save} size="lg" disabled={saving}>
                 {saving ? "Saving…" : "Save Product"}
               </Button>
-              <Button variant="outline" size="lg" onClick={() => setEditing(null)}>
+              <Button variant="outline" size="lg" onClick={() => {
+                setVariationDraft("");
+                setEditing(null);
+              }}>
                 Cancel
               </Button>
             </div>
