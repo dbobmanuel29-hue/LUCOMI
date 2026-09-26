@@ -392,16 +392,19 @@ export function SavingNotice({ children }: { children: React.ReactNode }) {
 export function Dashboard() {
   const products = useAsync(() => api.products.list());
   const enquiries = useAsync(() => api.enquiries.list());
+  const reviews = useAsync(() => api.testimonials.list());
 
   const all = products.data ?? [];
   const allEnq = enquiries.data ?? [];
-  const loading = products.loading || enquiries.loading;
+  const allReviews = reviews.data ?? [];
+  const pendingReviews = allReviews.filter((review) => !review.published && !review.placeholder);
+  const loading = products.loading || enquiries.loading || reviews.loading;
 
   return (
     <>
       <AdminPageHead
         title="Overview"
-        description="Catalogue and enquiry activity across the LUCOMI website."
+        description="Catalogue, enquiry and customer feedback activity across the LUCOMI website."
         action={<Button href="/admin/products">Manage Products</Button>}
       />
 
@@ -415,7 +418,21 @@ export function Dashboard() {
             <Stat label="Featured" value={all.filter((p) => p.featured).length} hint="On the homepage" />
             <Stat label="Total Enquiries" value={allEnq.length} hint="All sources" />
             <Stat label="New Enquiries" value={allEnq.filter((e) => e.status === "New").length} hint="Awaiting contact" />
-          </>
+            <Stat label="Pending Reviews" value={pendingReviews.length} hint="Awaiting approval" />
+            {pendingReviews.length > 0 && (
+        <section className="mt-10 rounded-xl border border-royal/20 bg-white p-6 plate-shadow sm:p-7">
+          <div className="flex flex-col gap-4 sm:flex-row sm:items-center sm:justify-between">
+            <div>
+              <Micro className="text-royal">Action required</Micro>
+              <h2 className="display mt-2 text-3xl">{pendingReviews.length} review{pendingReviews.length === 1 ? "" : "s"} awaiting approval</h2>
+              <p className="mt-2 text-[14px] text-mute">Review customer feedback before it appears publicly on the website.</p>
+            </div>
+            <Button href="/admin/testimonials">Review feedback</Button>
+          </div>
+        </section>
+      )}
+
+    </>
         )}
       </div>
 
