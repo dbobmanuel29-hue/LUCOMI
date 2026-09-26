@@ -204,12 +204,23 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
       }
     }
 
+    const nextPhotoURL =
+      changes.photoURL && !changes.photoURL.startsWith("data:")
+        ? changes.photoURL
+        : existingPhotoURL;
+
+    if (photoChanged) {
+      await updateProfile(current, {
+        photoURL: nextPhotoURL || null,
+      });
+    }
+
     await setDoc(profileRef, {
       uid: current.uid,
       name: nextName,
       email: current.email || "",
       phone: nextPhone,
-      photoURL: changes.photoURL && !changes.photoURL.startsWith("data:") ? changes.photoURL : existingPhotoURL,
+      photoURL: nextPhotoURL,
       provider: current.providerData.some((item) => item.providerId === "google.com") ? "google" : "email",
       ...(photoChanged ? { profileImageChangedAt: serverTimestamp() } : {}),
       updatedAt: serverTimestamp(),
@@ -220,7 +231,7 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
       ...changes,
       name: nextName,
       phone: nextPhone || undefined,
-      photoURL: changes.photoURL && !changes.photoURL.startsWith("data:") ? changes.photoURL : existing.photoURL,
+      photoURL: nextPhotoURL,
     } : existing);
   };
 
