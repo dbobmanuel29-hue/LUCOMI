@@ -27,7 +27,10 @@ service cloud.firestore {
     }
 
     match /admins/{uid} {
-      allow read: if isOwner(uid);
+      // Admins may read the admin directory so the dashboard can display
+      // the Admin badge for every authorized account. Individual users may
+      // still read only their own admin document.
+      allow read: if isAdmin() || isOwner(uid);
       allow write: if false;
     }
 
