@@ -223,9 +223,6 @@ export const api = {
         ? await getDocs(collection(db, "products"))
         : await getDocs(query(collection(db, "products"), where("published", "==", true)));
 
-      if (snapshot.empty) {
-        return wait(admin ? [...mock.products] : mock.products.filter((p) => p.published));
-      }
       return wait(snapshot.docs.map((item) => productFromDoc(item.id, item.data())));
     },
 
@@ -235,9 +232,7 @@ export const api = {
       const snapshot = await getDocs(
         query(collection(db, "products"), where("published", "==", true)),
       );
-      const items = snapshot.empty
-        ? mock.products.filter((p) => p.published)
-        : snapshot.docs.map((item) => productFromDoc(item.id, item.data()));
+      const items = snapshot.docs.map((item) => productFromDoc(item.id, item.data()));
       return wait(items.filter((p) => p.featured));
     },
 
@@ -288,9 +283,6 @@ export const api = {
       const snapshot = admin
         ? await getDocs(collection(db, "categories"))
         : await getDocs(query(collection(db, "categories"), where("published", "==", true)));
-      if (snapshot.empty) {
-        return wait(admin ? [...mock.categories] : mock.categories.filter((c) => c.published));
-      }
       return wait(snapshot.docs.map((item) => categoryFromDoc(item.id, item.data())));
     },
 
@@ -318,7 +310,6 @@ export const api = {
       const snapshot = admin
         ? await getDocs(collection(db, "projects"))
         : await getDocs(query(collection(db, "projects"), where("published", "==", true)));
-      if (snapshot.empty) return wait(admin ? [] : mock.projects.filter((p) => p.published));
       return wait(snapshot.docs.map((item) => projectFromDoc(item.id, item.data())));
     },
 
@@ -347,7 +338,6 @@ export const api = {
       const snapshot = admin
         ? await getDocs(collection(db, "testimonials"))
         : await getDocs(query(collection(db, "testimonials"), where("published", "==", true)));
-      if (snapshot.empty) return wait(admin ? [] : mock.testimonials.filter((t) => t.published));
       return wait(snapshot.docs.map((item) => testimonialFromDoc(item.id, item.data())));
     },
 
@@ -410,7 +400,6 @@ export const api = {
       const admin = await isCurrentAdmin();
       if (admin) await ensureAdminSeeded("team", mock.team);
       const snapshot = await getDocs(collection(db, "team"));
-      if (snapshot.empty) return wait(admin ? [] : mock.team);
       return wait(snapshot.docs.map((item) => teamFromDoc(item.id, item.data())));
     },
 
