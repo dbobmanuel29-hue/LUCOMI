@@ -175,9 +175,20 @@ service cloud.firestore {
       allow create: if isAdmin()
         || (
           signedIn()
+          && request.resource.data.id == id
           && request.resource.data.actorUid == request.auth.uid
           && request.resource.data.read == false
           && request.resource.data.type in ["enquiry", "review"]
+          && request.resource.data.title is string
+          && request.resource.data.title.size() <= 100
+          && request.resource.data.message is string
+          && request.resource.data.message.size() <= 500
+          && request.resource.data.sourceId is string
+          && request.resource.data.sourceId.size() <= 120
+          && (
+            (request.resource.data.type == "enquiry" && request.resource.data.link == "/admin/enquiries")
+            || (request.resource.data.type == "review" && request.resource.data.link == "/admin/testimonials")
+          )
           && request.resource.data.keys().hasOnly([
             "id", "type", "title", "message", "link", "sourceId", "actorUid", "read", "createdAt"
           ])
