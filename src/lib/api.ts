@@ -238,7 +238,7 @@ export const api = {
   team: {
     list: async () => {
       const admin = await isCurrentAdmin();
-      const snapshot = admin ? await getDocs(collection(db, "team")) : await getDocs(query(collection(db, "team"), where("published", "==", true)));
+      const snapshot = await getDocs(collection(db, "team"));
       return wait(snapshot.docs.map((item) => teamFromDoc(item.id, item.data())));
     },
     save: async (member: TeamMember) => {
