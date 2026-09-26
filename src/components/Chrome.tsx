@@ -1,5 +1,5 @@
 import { useCallback, useEffect, useRef, useState } from "react";
-import { Link, NavLink, useLocation } from "react-router-dom";
+import { Link, NavLink, useLocation, useNavigate } from "react-router-dom";
 import { AnimatePresence, motion, useScroll, useSpring } from "framer-motion";
 import { Bell, Check, ChevronDown, Mail, MapPin, Menu, Moon, Phone, Search, Sun, X } from "lucide-react";
 import { api, useAsync } from "../lib/api";
