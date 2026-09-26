@@ -162,11 +162,12 @@ export function AdminNotifications() {
       <button
         type="button"
         onClick={() => setOpen((value) => !value)}
-        className="relative flex h-10 w-10 items-center justify-center rounded-lg border border-line bg-white text-ink transition-colors hover:border-ink/40"
+        className="relative flex h-10 shrink-0 items-center justify-center gap-2 rounded-lg border border-line bg-white px-2.5 text-ink transition-colors hover:border-ink/40 sm:w-auto sm:px-3"
         aria-label={unread.length ? `${unread.length} unread notifications` : "Notifications"}
         aria-expanded={open}
       >
-        <Bell className="h-4.5 w-4.5" />
+        <Bell className="h-4 w-4 shrink-0" />
+        <span className="hidden text-[12px] font-semibold sm:inline">Notifications</span>
         {unread.length > 0 && (
           <span className="absolute -right-1 -top-1 flex min-h-5 min-w-5 items-center justify-center rounded-full bg-royal px-1 text-[10px] font-bold text-white ring-2 ring-paper">
             {unread.length > 99 ? "99+" : unread.length}
@@ -184,13 +185,26 @@ export function AdminNotifications() {
                 <p className="mt-0.5 text-[11.5px] text-mute">{unread.length ? `${unread.length} unread` : "You're all caught up"}</p>
               </div>
               {unread.length > 0 && (
+                <div className="flex items-center gap-3">
+                {unread.length > 0 && (
+                  <button
+                    type="button"
+                    className="micro text-royal hover:text-ink"
+                    onClick={() => void api.notifications.markAllRead(unread.map((item) => item.id))}
+                  >
+                    Mark all read
+                  </button>
+                )}
                 <button
                   type="button"
-                  className="micro text-royal hover:text-ink"
-                  onClick={() => void api.notifications.markAllRead(unread.map((item) => item.id))}
+                  onClick={() => setOpen(false)}
+                  className="flex h-8 w-8 items-center justify-center rounded-md border border-line text-mute transition-colors hover:border-ink hover:text-ink"
+                  aria-label="Close notifications"
+                  title="Close notifications"
                 >
-                  Mark all read
+                  <X className="h-4 w-4" />
                 </button>
+              </div>
               )}
             </div>
             <div className="max-h-[420px] overflow-y-auto">
