@@ -82,8 +82,8 @@ function Hero() {
               <Button href="/products" size="lg" variant="ink">
                 Explore Our Furniture
               </Button>
-              <Button size="lg" onClick={() => open("", "Quote Request")}>
-                Request a Quote
+              <Button size="lg" variant="outline" href="/contact">
+                Talk to LUCOMI
               </Button>
             </motion.div>
           </div>
@@ -154,7 +154,7 @@ function Hero() {
             onClick={() => open("", "Quote Request")}
             className="absolute left-1/2 top-0 z-10 -translate-x-1/2 -translate-y-1/2 rounded-full bg-royal px-7 py-3.5 text-[11px] font-semibold uppercase tracking-[0.16em] text-white shadow-[0_14px_30px_-16px_rgba(21,96,232,1)] transition-transform duration-200 hover:scale-[1.03]"
           >
-            Request a Quote
+            Start a Project
           </button>
           <div className="grain relative overflow-hidden" style={{ clipPath: "url(#heroWave)" }}>
             <motion.img
@@ -199,7 +199,7 @@ function Hero() {
 }
 
 /* ------------------------------ featured ------------------------------ */
-const PATTERN = ["text", "photo", "text", "photo", "photo", "text"] as const;
+const PATTERN = ["photo", "photo", "photo", "photo", "photo", "photo"] as const;
 
 function MosaicPhoto({ product, delay }: { product: Product; delay: number }) {
   return (
@@ -227,7 +227,7 @@ function MosaicPhoto({ product, delay }: { product: Product; delay: number }) {
 
 function Featured() {
   const { data, loading, error, reload } = useAsync(() => api.products.featured());
-  const items = (data ?? []).slice(0, 6);
+  const items = (data ?? []).filter((product) => product.images?.[0]).slice(0, 6);
 
   return (
     <section id="featured" className="shell scroll-mt-24 py-20 sm:py-28">
