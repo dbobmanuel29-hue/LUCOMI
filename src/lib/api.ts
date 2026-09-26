@@ -503,20 +503,27 @@ export function useAsync<T>(
 
   useEffect(() => {
     let alive = true;
-    setState((s) => ({ ...s, loading: true, error: null }));
-    fnRef.current()
-      .then((data) => alive && setState({ data, loading: false, error: null }))
-      .catch((error) => {
-        console.error("LUCOMI data request failed:", error);
-        alive &&
-          setState({
-            data: null,
-            loading: false,
-            error: "Something went wrong. Please try again.",
-          });
-      });
+    const load = () => {
+      setState((s) => ({ ...s, loading: true, error: null }));
+      fnRef.current()
+        .then((data) => alive && setState({ data, loading: false, error: null }))
+        .catch((error) => {
+          console.error("LUCOMI data request failed:", error);
+          alive &&
+            setState({
+              data: null,
+              loading: false,
+              error: "Something went wrong. Please try again.",
+            });
+        });
+    };
+
+    load();
+    const unsubscribe = subscribeToDataChanges(load);
+
     return () => {
       alive = false;
+      unsubscribe();
     };
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [tick, ...deps]);
