@@ -204,10 +204,15 @@ const PATTERN = ["photo", "photo", "photo", "photo", "photo", "photo"] as const;
 const FEATURED_FALLBACKS: Record<string, string> = {
   "executive-desks": IMG.executiveDesk,
   workstations: IMG.workstations,
+  "office-desks": IMG.hero,
   "conference-tables": IMG.conference,
   "reception-desks": IMG.reception,
   "office-chairs": IMG.chair,
   storage: IMG.storage,
+  "filing-cabinets": IMG.storage,
+  "office-storage": IMG.storage,
+  "reception-furniture": IMG.reception,
+  "custom-office-furniture": IMG.custom,
 };
 
 function featuredImage(product: Product) {
