@@ -52,8 +52,11 @@ export function AdminUsers() {
     setLoading(true);
     setError("");
     try {
-      const userSnap = await getDocs(collection(db, "users"));
-      const currentAdminUid = auth.currentUser?.uid || "";
+      const [userSnap, adminSnap] = await Promise.all([
+        getDocs(collection(db, "users")),
+        getDocs(collection(db, "admins")),
+      ]);
+      const adminUids = new Set(adminSnap.docs.map((item) => item.id));
       const rows = userSnap.docs.map((item) => {
         const d = item.data();
         return {
@@ -65,7 +68,7 @@ export function AdminUsers() {
           createdAt: asTimestamp(d.createdAt),
           lastLoginAt: asTimestamp(d.lastLoginAt),
           lastSeenAt: asTimestamp(d.lastSeenAt),
-          isAdmin: item.id === currentAdminUid,
+          isAdmin: adminUids.has(item.id),
         };
       });
       rows.sort((a, b) => (b.lastLoginAt?.toMillis() ?? b.createdAt?.toMillis() ?? 0) - (a.lastLoginAt?.toMillis() ?? a.createdAt?.toMillis() ?? 0));
