@@ -248,7 +248,8 @@ function subscribeToDataChanges(listener: () => void) {
   return () => window.removeEventListener(DATA_CHANGED_EVENT, listener);
 }
 
-export const api = {\n  notifications: {
+export const api = {
+  notifications: {
     list: async () => {
       if (!(await isCurrentAdmin())) return [];
       const snapshot = await getDocs(collection(db, "notifications"));
