@@ -147,9 +147,27 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
       setIsAdmin(false);
 
       if (firebaseUser) {
-        void ensureUserProfile(firebaseUser).catch(() => {
-          // Profile persistence errors should not block authentication.
-        });
+        void ensureUserProfile(firebaseUser)
+          .then(async () => {
+            // Firestore is the source of truth for customer profile details
+            // that Firebase Auth does not store, such as the saved phone number.
+            const profileSnapshot = await getDoc(doc(db, "users", firebaseUser.uid));
+            const profile = profileSnapshot.data();
+
+            setUser((current) => current ? {
+              ...current,
+              name: typeof profile?.name === "string" && profile.name.trim()
+                ? profile.name
+                : current.name,
+              phone: typeof profile?.phone === "string" ? profile.phone : current.phone,
+              photoURL: typeof profile?.photoURL === "string" && profile.photoURL
+                ? profile.photoURL
+                : current.photoURL,
+            } : current);
+          })
+          .catch(() => {
+            // Profile persistence errors should not block authentication.
+          });
 
         heartbeat = window.setInterval(() => {
           void setDoc(doc(db, "users", firebaseUser.uid), {
@@ -180,8 +198,16 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
     const nextName = changes.name?.trim() || current.displayName || current.email?.split("@")[0] || "LUCOMI User";
     const nextPhone = changes.phone?.trim() || "";
 
-    if (changes.name !== undefined && changes.name.trim() && changes.name.trim() !== current.displayName) {
-      await updateProfile(current, { displayName: changes.name.trim() });
+    if (
+      (changes.name !== undefined && changes.name.trim() && changes.name.trim() !== current.displayName) ||
+      changes.phone !== undefined
+    ) {
+      await updateProfile(current, {
+        ...(changes.name !== undefined && changes.name.trim() && changes.name.trim() !== current.displayName
+          ? { displayName: changes.name.trim() }
+          : {}),
+        ...(changes.phone !== undefined ? { phoneNumber: nextPhone || null } : {}),
+      });
     }
 
     const profileRef = doc(db, "users", current.uid);
