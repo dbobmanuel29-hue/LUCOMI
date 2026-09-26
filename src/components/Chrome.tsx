@@ -1,8 +1,9 @@
 import { useCallback, useEffect, useRef, useState } from "react";
 import { Link, NavLink, useLocation } from "react-router-dom";
 import { AnimatePresence, motion, useScroll, useSpring } from "framer-motion";
-import { ChevronDown, Mail, MapPin, Menu, Moon, Phone, Search, Sun, X } from "lucide-react";
+import { Bell, Check, ChevronDown, Mail, MapPin, Menu, Moon, Phone, Search, Sun, X } from "lucide-react";
 import { api, useAsync } from "../lib/api";
+import type { AdminNotification } from "../lib/types";
 import { businessSettings } from "../lib/mock";
 import { cn, displayPhone, telHref, waLink } from "../lib/helpers";
 import { Logo, LogoLockup, Mark } from "./Logo";
@@ -104,6 +105,157 @@ export function ThemeToggle({ tone = "light" }: { tone?: "light" | "dark" }) {
     >
       {dark ? <Sun className="h-4.5 w-4.5" /> : <Moon className="h-4.5 w-4.5" />}
     </button>
+  );
+}
+
+/* ------------------------- admin notifications ------------------------ */
+export function SiteAdminNotifications() {
+  const [notifications, setNotifications] = useState<AdminNotification[]>([]);
+  const [open, setOpen] = useState(false);
+  const { isAdmin } = useAuth();
+  const navigate = useNavigate();
+  const notificationRef = useRef<HTMLDivElement>(null);
+
+  useEffect(() => {
+    if (!isAdmin) {
+      setNotifications([]);
+      setOpen(false);
+      return;
+    }
+    return api.notifications.subscribe(setNotifications);
+  }, [isAdmin]);
+
+  useEffect(() => {
+    if (!open) return;
+
+    const dismiss = (event: PointerEvent) => {
+      const target = event.target as Node;
+      if (!notificationRef.current?.contains(target)) setOpen(false);
+    };
+    const escape = (event: KeyboardEvent) => {
+      if (event.key === "Escape") setOpen(false);
+    };
+
+    document.addEventListener("pointerdown", dismiss);
+    document.addEventListener("keydown", escape);
+    return () => {
+      document.removeEventListener("pointerdown", dismiss);
+      document.removeEventListener("keydown", escape);
+    };
+  }, [open]);
+
+  if (!isAdmin) return null;
+
+  const unread = notifications.filter((item) => !item.read);
+
+  const openNotification = async (item: AdminNotification) => {
+    try {
+      if (!item.read) await api.notifications.markRead(item.id);
+    } finally {
+      setOpen(false);
+      navigate(item.link);
+    }
+  };
+
+  return (
+    <div ref={notificationRef} className="relative">
+      <button
+        type="button"
+        onClick={() => setOpen((value) => !value)}
+        className={cn(
+          "relative flex h-10 w-10 items-center justify-center rounded-full border bg-white text-ink transition-colors hover:border-royal hover:text-royal",
+          unread.length > 0 ? "border-royal/45 text-royal" : "border-line",
+        )}
+        aria-label={unread.length ? `${unread.length} unread admin notifications` : "Admin notifications"}
+        aria-expanded={open}
+        title={unread.length ? `${unread.length} unread notification${unread.length === 1 ? "" : "s"}` : "Admin notifications"}
+      >
+        <Bell className="h-4.5 w-4.5" />
+        {unread.length > 0 && (
+          <span className="absolute -right-1 -top-1 flex min-h-5 min-w-5 items-center justify-center rounded-full bg-royal px-1 text-[10px] font-bold text-white ring-2 ring-paper">
+            {unread.length > 99 ? "99+" : unread.length}
+          </span>
+        )}
+      </button>
+
+      {open && (
+        <div className="fixed inset-x-3 top-[72px] z-[100] overflow-hidden rounded-xl border border-line bg-paper plate-shadow-lg sm:absolute sm:inset-x-auto sm:right-0 sm:top-12 sm:w-[390px]">
+          <div className="flex items-start justify-between gap-3 border-b border-line px-4 py-3">
+            <div>
+              <p className="text-sm font-semibold text-ink">Admin notifications</p>
+              <p className="mt-0.5 text-[11.5px] text-mute">
+                {unread.length ? `${unread.length} unread` : "You're all caught up"}
+              </p>
+            </div>
+            <div className="flex items-center gap-2">
+              {unread.length > 0 && (
+                <button
+                  type="button"
+                  className="micro text-royal hover:text-ink"
+                  onClick={() => void api.notifications.markAllRead(unread.map((item) => item.id))}
+                >
+                  Mark all read
+                </button>
+              )}
+              <button
+                type="button"
+                onClick={() => setOpen(false)}
+                className="flex h-8 w-8 items-center justify-center rounded-md border border-line text-mute hover:border-ink hover:text-ink"
+                aria-label="Close notifications"
+              >
+                <X className="h-4 w-4" />
+              </button>
+            </div>
+          </div>
+
+          <div className="max-h-[min(65vh,460px)] overflow-y-auto overscroll-contain">
+            {notifications.length === 0 ? (
+              <div className="px-5 py-10 text-center">
+                <Bell className="mx-auto h-6 w-6 text-mute" />
+                <p className="mt-3 text-sm font-semibold text-ink">No notifications yet</p>
+                <p className="mt-1 text-[12.5px] leading-relaxed text-mute">
+                  New enquiries and customer reviews will appear here.
+                </p>
+              </div>
+            ) : (
+              notifications.slice(0, 30).map((item) => (
+                <button
+                  key={item.id}
+                  type="button"
+                  onClick={() => void openNotification(item)}
+                  className={cn(
+                    "flex w-full gap-3 border-b border-line px-4 py-3 text-left transition-colors hover:bg-plate active:bg-plate",
+                    !item.read && "bg-royal/[0.045]",
+                  )}
+                >
+                  <span className={cn(
+                    "mt-0.5 flex h-8 w-8 shrink-0 items-center justify-center rounded-full",
+                    item.type === "review" ? "bg-royal/10 text-royal" : "bg-ink/5 text-ink",
+                  )}>
+                    {item.read ? <Check className="h-4 w-4" /> : <Bell className="h-4 w-4" />}
+                  </span>
+                  <span className="min-w-0 flex-1">
+                    <span className={cn(
+                      "block text-[13px]",
+                      !item.read ? "font-semibold text-ink" : "font-medium text-charcoal",
+                    )}>
+                      {item.title}
+                    </span>
+                    <span className="mt-1 block break-words text-[12px] leading-relaxed text-mute">
+                      {item.message}
+                    </span>
+                    <span className="mt-1.5 block text-[10.5px] uppercase tracking-[0.08em] text-mute">
+                      {new Date(item.createdAt).toLocaleString()}
+                    </span>
+                  </span>
+                  {!item.read && <span className="mt-2 h-2 w-2 shrink-0 rounded-full bg-royal" />}
+                </button>
+              ))
+            )}
+          </div>
+        </div>
+      )}
+    </div>
   );
 }
 
@@ -303,6 +455,7 @@ export function SiteHeader() {
             >
               <Search className="h-4.5 w-4.5" />
             </button>
+            <SiteAdminNotifications />
             <ThemeToggle />
             <button
               onClick={() => setMenuOpen(true)}
