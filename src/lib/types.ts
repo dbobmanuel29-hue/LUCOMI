@@ -87,6 +87,8 @@ export interface Enquiry {
   furnitureType: string;
   quantity: string;
   description: string;
+  /** Reference images uploaded with a custom furniture request. */
+  images: string[];
   preferredContact: "Phone" | "Email" | "WhatsApp";
   source: EnquirySource;
   status: EnquiryStatus;
