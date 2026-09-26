@@ -93,16 +93,16 @@ export const api = {
     list: async () => {
       const admin = await isCurrentAdmin();
       const snapshot = admin ? await getDocs(collection(db, "products")) : await getDocs(query(collection(db, "products"), where("published", "==", true)));
-      if (snapshot.empty) return admin ? wait([...mock.products]) : wait(mock.products.filter((p) => p.published));
       return wait(snapshot.docs.map((item) => productFromDoc(item.id, item.data())));
     },
     featured: async () => {
-      const snapshot = await getDocs(query(collection(db, "products"), where("published", "==", true), where("featured", "==", true)));
-      return wait(snapshot.empty ? mock.products.filter((p) => p.published && p.featured) : snapshot.docs.map((item) => productFromDoc(item.id, item.data())));
+      const snapshot = await getDocs(query(collection(db, "products"), where("published", "==", true)));
+      return wait(snapshot.docs.map((item) => productFromDoc(item.id, item.data())).filter((product) => product.featured));
     },
     bySlug: async (slug: string) => {
-      const snapshot = await getDocs(query(collection(db, "products"), where("slug", "==", slug), where("published", "==", true)));
-      return wait(snapshot.empty ? mock.products.find((p) => p.slug === slug && p.published) ?? null : productFromDoc(snapshot.docs[0].id, snapshot.docs[0].data()));
+      const snapshot = await getDocs(query(collection(db, "products"), where("slug", "==", slug)));
+      const match = snapshot.docs.find((item) => item.data().published === true);
+      return wait(match ? productFromDoc(match.id, match.data()) : null);
     },
     related: async (slug: string, limit = 3) => {
       const all = await api.products.list();
@@ -112,7 +112,9 @@ export const api = {
     },
     save: async (product: Product) => {
       const id = product.id || `p-${Date.now()}`;
-      const value = { ...product, id, updatedAt: new Date().toISOString().slice(0, 10) };
+      const slugBase = product.slug.trim() || product.name.trim();
+      const slug = slugBase.toLowerCase().replace(/[^a-z0-9]+/g, "-").replace(/^-+|-+$/g, "") || id;
+      const value = { ...product, id, slug, updatedAt: new Date().toISOString().slice(0, 10) };
       await setDoc(doc(db, "products", id), value, { merge: true });
       return value;
     },
@@ -122,22 +124,95 @@ export const api = {
     list: async () => {
       const admin = await isCurrentAdmin();
       const snapshot = admin ? await getDocs(collection(db, "categories")) : await getDocs(query(collection(db, "categories"), where("published", "==", true)));
-      if (snapshot.empty) return admin ? wait([...mock.categories]) : wait(mock.categories.filter((c) => c.published));
       return wait(snapshot.docs.map((item) => categoryFromDoc(item.id, item.data())));
     },
     save: async (category: Category) => {
       const id = category.id || `c-${Date.now()}`;
-      const value = { ...category, id };
+      const slugBase = category.slug.trim() || category.name.trim();
+      const slug = slugBase.toLowerCase().replace(/[^a-z0-9]+/g, "-").replace(/^-+|-+$/g, "") || id;
+      const value = { ...category, id, slug };
       await setDoc(doc(db, "categories", id), value, { merge: true });
       return value;
     },
     remove: async (id: string) => { await deleteDoc(doc(db, "categories", id)); return true; },
   },
-  projects: { list: () => wait([...projectStore]), save: (project: Project) => { const idx = projectStore.findIndex((p) => p.id === project.id); if (idx >= 0) projectStore[idx] = project; else projectStore = [project, ...projectStore]; return wait(project, 450); }, remove: (id: string) => { projectStore = projectStore.filter((p) => p.id !== id); return wait(true, 300); } },
-  testimonials: { list: () => wait([...testimonialStore]), save: (testimonial: Testimonial) => { const idx = testimonialStore.findIndex((t) => t.id === testimonial.id); if (idx >= 0) testimonialStore[idx] = testimonial; else testimonialStore = [testimonial, ...testimonialStore]; return wait(testimonial, 450); }, remove: (id: string) => { testimonialStore = testimonialStore.filter((t) => t.id !== id); return wait(true, 300); } },
-  enquiries: { list: () => wait([...enquiryStore]), create: (enquiry: Enquiry) => { enquiryStore = [enquiry, ...enquiryStore]; return wait(enquiry, 700); }, setStatus: (id: string, status: Enquiry["status"]) => { enquiryStore = enquiryStore.map((e) => (e.id === id ? { ...e, status } : e)); return wait(true, 250); }, remove: (id: string) => { enquiryStore = enquiryStore.filter((e) => e.id !== id); return wait(true, 300); } },
-  team: { list: () => wait([...teamStore]), save: (member: TeamMember) => { const idx = teamStore.findIndex((m) => m.id === member.id); if (member.featured) teamStore = teamStore.map((m) => ({ ...m, featured: false })); if (idx >= 0) teamStore[idx] = member; else teamStore = [...teamStore, member]; return wait(member, 450); }, remove: (id: string) => { teamStore = teamStore.filter((m) => m.id !== id); return wait(true, 300); } },
-  settings: { get: () => wait({ ...settingsStore }), save: (settings: BusinessSettings) => { settingsStore = { ...settings }; Object.assign(mock.businessSettings, settings); return wait(settingsStore, 600); } },
+  projects: {
+    list: async () => {
+      const admin = await isCurrentAdmin();
+      const snapshot = admin ? await getDocs(collection(db, "projects")) : await getDocs(query(collection(db, "projects"), where("published", "==", true)));
+      return wait(snapshot.docs.map((item) => projectFromDoc(item.id, item.data())));
+    },
+    save: async (project: Project) => {
+      const id = project.id || `pr-${Date.now()}`;
+      const slugBase = project.slug.trim() || project.name.trim();
+      const slug = slugBase.toLowerCase().replace(/[^a-z0-9]+/g, "-").replace(/^-+|-+$/g, "") || id;
+      const value = { ...project, id, slug };
+      await setDoc(doc(db, "projects", id), value, { merge: true });
+      return value;
+    },
+    remove: async (id: string) => { await deleteDoc(doc(db, "projects", id)); return true; },
+  },
+  testimonials: {
+    list: async () => {
+      const admin = await isCurrentAdmin();
+      const snapshot = admin ? await getDocs(collection(db, "testimonials")) : await getDocs(query(collection(db, "testimonials"), where("published", "==", true)));
+      return wait(snapshot.docs.map((item) => testimonialFromDoc(item.id, item.data())));
+    },
+    save: async (testimonial: Testimonial) => {
+      const id = testimonial.id || `review-${Date.now()}`;
+      const value = { ...testimonial, id };
+      await setDoc(doc(db, "testimonials", id), value, { merge: true });
+      return value;
+    },
+    remove: async (id: string) => { await deleteDoc(doc(db, "testimonials", id)); return true; },
+  },
+  enquiries: {
+    list: async () => {
+      const snapshot = await getDocs(collection(db, "enquiries"));
+      return wait(snapshot.docs.map((item) => enquiryFromDoc(item.id, item.data())));
+    },
+    create: async (enquiry: Enquiry) => {
+      const id = enquiry.id || `enquiry-${Date.now()}`;
+      const value = { ...enquiry, id };
+      await setDoc(doc(db, "enquiries", id), value, { merge: true });
+      return value;
+    },
+    setStatus: async (id: string, status: Enquiry["status"]) => { await setDoc(doc(db, "enquiries", id), { status }, { merge: true }); return true; },
+    remove: async (id: string) => { await deleteDoc(doc(db, "enquiries", id)); return true; },
+  },
+  team: {
+    list: async () => {
+      const admin = await isCurrentAdmin();
+      const snapshot = admin ? await getDocs(collection(db, "team")) : await getDocs(query(collection(db, "team"), where("published", "==", true)));
+      return wait(snapshot.docs.map((item) => teamFromDoc(item.id, item.data())));
+    },
+    save: async (member: TeamMember) => {
+      const id = member.id || `team-${Date.now()}`;
+      const value = { ...member, id };
+      await setDoc(doc(db, "team", id), value, { merge: true });
+      if (member.featured) {
+        const snapshot = await getDocs(collection(db, "team"));
+        const batch = writeBatch(db);
+        snapshot.docs.forEach((item) => {
+          if (item.id !== id && item.data().featured === true) batch.update(item.ref, { featured: false });
+        });
+        await batch.commit();
+      }
+      return value;
+    },
+    remove: async (id: string) => { await deleteDoc(doc(db, "team", id)); return true; },
+  },
+  settings: {
+    get: async () => {
+      const snapshot = await getDoc(doc(db, "settings", "business"));
+      return wait(snapshot.exists() ? settingsFromDoc(snapshot.data()) : { ...businessSettings });
+    },
+    save: async (settings: BusinessSettings) => {
+      const value = { ...settings };
+      await setDoc(doc(db, "settings", "business"), value, { merge: true });
+      return value;
+    },
+  },
 };
 export type AsyncState<T> = {
   data: T | null;
