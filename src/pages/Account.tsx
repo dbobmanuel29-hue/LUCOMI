@@ -156,7 +156,7 @@ export default function Account() {
       <section className="shell pb-24 pt-12">
         <div className="grid gap-8 lg:grid-cols-12">
           <div className="space-y-8 lg:col-span-8">
-            {message && <Notice title="Account update">{message}</Notice>}
+            {message && <Notice title="Profile updated successfully">{message}</Notice>}
             {imageError && <Notice title="Image upload">{imageError}</Notice>}
 
             <Reveal>
