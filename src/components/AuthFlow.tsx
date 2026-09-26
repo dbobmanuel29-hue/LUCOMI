@@ -223,8 +223,8 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
     }
 
     const nextPhotoURL =
-      changes.photoURL && !changes.photoURL.startsWith("data:")
-        ? changes.photoURL
+      changes.photoURL !== undefined
+        ? (changes.photoURL.startsWith("data:") ? existingPhotoURL : changes.photoURL)
         : existingPhotoURL;
 
     if (photoChanged) {
