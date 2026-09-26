@@ -31,28 +31,6 @@ let adminCacheUid: string | null = null;
 let adminCacheValue = false;
 let adminCacheExpiresAt = 0;
 
-async function isCurrentAdmin() {
-  const user = auth.currentUser;
-  if (!user) {
-    adminCacheUid = null;
-    adminCacheValue = false;
-    adminCacheExpiresAt = 0;
-    return false;
-  }
-
-  const now = Date.now();
-  if (adminCacheUid === user.uid && now < adminCacheExpiresAt) {
-    return adminCacheValue;
-  }
-
-  const snapshot = await getDoc(doc(db, "admins", user.uid));
-  const value = snapshot.exists() && snapshot.data()?.role === "admin";
-  adminCacheUid = user.uid;
-  adminCacheValue = value;
-  adminCacheExpiresAt = now + 30_000;
-  return value;
-}
-
 function asString(value: unknown, fallback = ""): string {
   return typeof value === "string" ? value : fallback;
 }
@@ -195,6 +173,28 @@ function enquiryFromDoc(id: string, data: Record<string, unknown>): Enquiry {
   };
 }
 
+async function isCurrentAdmin() {
+  const user = auth.currentUser;
+  if (!user) {
+    adminCacheUid = null;
+    adminCacheValue = false;
+    adminCacheExpiresAt = 0;
+    return false;
+  }
+
+  const now = Date.now();
+  if (adminCacheUid === user.uid && now < adminCacheExpiresAt) {
+    return adminCacheValue;
+  }
+
+  const snapshot = await getDoc(doc(db, "admins", user.uid));
+  const value = snapshot.exists() && snapshot.data()?.role === "admin";
+  adminCacheUid = user.uid;
+  adminCacheValue = value;
+  adminCacheExpiresAt = now + 30_000;
+  return value;
+}
+
 async function createAdminNotification(input: Omit<AdminNotification, "id">) {
   const id = `n-${Date.now()}-${Math.random().toString(36).slice(2, 8)}`;
   await setDoc(doc(db, "notifications", id), { ...input, id });
@@ -309,6 +309,7 @@ export const api = {
     },
   },
 
+
   products: {
     list: async () => {
       const admin = await isCurrentAdmin();
@@ -320,6 +321,8 @@ export const api = {
     },
 
     featured: async () => {
+      // Query only published products, then filter featured in memory.
+      // This avoids a composite index dependency and is tiny on the Spark catalogue.
       const snapshot = await getDocs(
         query(collection(db, "products"), where("published", "==", true)),
       );
@@ -328,6 +331,8 @@ export const api = {
     },
 
     bySlug: async (slug: string) => {
+      // Read published products once and match the slug locally. This also avoids
+      // the composite-index issue from querying slug + published together.
       const snapshot = await getDocs(
         query(collection(db, "products"), where("published", "==", true)),
       );
@@ -423,3 +428,288 @@ export const api = {
       return true;
     },
   },
+
+  testimonials: {
+    list: async () => {
+      const admin = await isCurrentAdmin();
+      if (admin) await ensureAdminSeeded("testimonials", mock.testimonials);
+      const snapshot = admin
+        ? await getDocs(collection(db, "testimonials"))
+        : await getDocs(query(collection(db, "testimonials"), where("published", "==", true)));
+      return wait(snapshot.docs.map((item) => testimonialFromDoc(item.id, item.data())));
+    },
+
+    save: async (testimonial: Testimonial) => {
+      const id = testimonial.id || `t-${Date.now()}`;
+      const ref = doc(db, "testimonials", id);
+      const existing = await getDoc(ref);
+      const value = { ...testimonial, id };
+      await setDoc(ref, value, { merge: true });
+      if (!existing.exists() && !value.placeholder && value.published === false && value.userId) {
+        try {
+          await createAdminNotification({
+            type: "review",
+            title: "New review awaiting approval",
+            message: `${value.customerName} submitted a customer review.`,
+            link: "/admin/testimonials",
+            sourceId: id,
+            actorUid: value.userId,
+            read: false,
+            createdAt: new Date().toISOString(),
+          });
+        } catch (notificationError) {
+          console.error("LUCOMI notification could not be created:", notificationError);
+        }
+      }
+      notifyDataChanged();
+      return value;
+    },
+
+    remove: async (id: string) => {
+      await deleteDoc(doc(db, "testimonials", id));
+      notifyDataChanged();
+      return true;
+    },
+  },
+
+  enquiries: {
+    list: async () => {
+      const admin = await isCurrentAdmin();
+      if (admin) {
+        const snapshot = await getDocs(collection(db, "enquiries"));
+        return wait(snapshot.docs.map((item) => enquiryFromDoc(item.id, item.data())));
+      }
+
+      const user = auth.currentUser;
+      if (!user) return [];
+      const snapshot = await getDocs(
+        query(collection(db, "enquiries"), where("userId", "==", user.uid)),
+      );
+      return wait(snapshot.docs.map((item) => enquiryFromDoc(item.id, item.data())));
+    },
+
+    create: async (enquiry: Enquiry) => {
+      const user = auth.currentUser;
+      if (!user) throw new Error("Please sign in before sending an enquiry.");
+      const id = enquiry.id || `e-${Date.now()}`;
+      const value = {
+        ...enquiry,
+        id,
+        userId: enquiry.userId || user.uid,
+        createdAt: enquiry.createdAt || new Date().toISOString().slice(0, 10),
+      };
+      await setDoc(doc(db, "enquiries", id), value);
+      // Every customer enquiry creates an admin notification, including custom project requests.
+      try {
+        await createAdminNotification({
+          type: "enquiry",
+          title: value.source === "Custom Furniture" ? "New custom project request" : "New enquiry received",
+          message:
+            value.source === "Custom Furniture"
+              ? `${value.fullName} submitted a custom furniture project request for ${value.furnitureType}.`
+              : `${value.fullName} sent a ${value.source.toLowerCase()} for ${value.furnitureType}.`,
+          link: "/admin/enquiries",
+          sourceId: id,
+          actorUid: user.uid,
+          read: false,
+          createdAt: new Date().toISOString(),
+        });
+      } catch (notificationError) {
+        console.error("LUCOMI notification could not be created:", notificationError);
+      }
+      notifyDataChanged();
+      return value;
+    },
+
+    setStatus: async (id: string, status: Enquiry["status"]) => {
+      await setDoc(doc(db, "enquiries", id), { status }, { merge: true });
+      return true;
+    },
+
+    remove: async (id: string) => {
+      await deleteDoc(doc(db, "enquiries", id));
+      try {
+        const notificationSnapshot = await getDocs(
+          query(collection(db, "notifications"), where("sourceId", "==", id)),
+        );
+        if (!notificationSnapshot.empty) {
+          const batch = writeBatch(db);
+          notificationSnapshot.docs.forEach((item) => batch.delete(item.ref));
+          await batch.commit();
+        }
+      } catch (notificationError) {
+        console.warn("LUCOMI enquiry notification cleanup failed:", notificationError);
+      }
+      notifyDataChanged();
+      return true;
+    },
+  },
+
+  team: {
+    list: async () => {
+      const admin = await isCurrentAdmin();
+      if (admin) await ensureAdminSeeded("team", mock.team);
+      const snapshot = await getDocs(collection(db, "team"));
+      return wait(snapshot.docs.map((item) => teamFromDoc(item.id, item.data())));
+    },
+
+    save: async (member: TeamMember) => {
+      const id = member.id || `tm-${Date.now()}`;
+      const value = { ...member, id };
+      if (member.featured) {
+        const snapshot = await getDocs(collection(db, "team"));
+        const batch = writeBatch(db);
+        snapshot.docs.forEach((item) => {
+          if (item.id !== id && item.data().featured === true) {
+            batch.set(item.ref, { featured: false }, { merge: true });
+          }
+        });
+        batch.set(doc(db, "team", id), value, { merge: true });
+        await batch.commit();
+      } else {
+        await setDoc(doc(db, "team", id), value, { merge: true });
+      }
+      notifyDataChanged();
+      return value;
+    },
+
+    remove: async (id: string) => {
+      await deleteDoc(doc(db, "team", id));
+      notifyDataChanged();
+      return true;
+    },
+  },
+
+  settings: {
+    get: async () => {
+      const snapshot = await getDoc(doc(db, "settings", "business"));
+      if (!snapshot.exists()) return wait({ ...mock.businessSettings });
+      const data = snapshot.data();
+      return wait({
+        companyName: asString(data.companyName, mock.businessSettings.companyName),
+        tagline: asString(data.tagline, mock.businessSettings.tagline),
+        logoUrl: asString(data.logoUrl, mock.businessSettings.logoUrl),
+        phone: asStringArray(data.phone),
+        email: asString(data.email, mock.businessSettings.email),
+        address: asString(data.address, mock.businessSettings.address),
+        whatsapp: asString(data.whatsapp),
+        businessHours: asString(data.businessHours, mock.businessSettings.businessHours),
+        social: {
+          facebook: asString((data.social as Record<string, unknown> | undefined)?.facebook),
+          instagram: asString((data.social as Record<string, unknown> | undefined)?.instagram),
+          tiktok: asString((data.social as Record<string, unknown> | undefined)?.tiktok),
+          twitter: asString((data.social as Record<string, unknown> | undefined)?.twitter),
+        },
+        aboutIntro: asString(data.aboutIntro, mock.businessSettings.aboutIntro),
+      } satisfies BusinessSettings);
+    },
+
+    save: async (settings: BusinessSettings) => {
+      await setDoc(doc(db, "settings", "business"), settings, { merge: true });
+      notifyDataChanged();
+      return settings;
+    },
+  },
+};
+
+export type AsyncState<T> = {
+  data: T | null;
+  loading: boolean;
+  error: string | null;
+};
+
+/** Shared loading / error / empty handling for every dynamic component. */
+export function useAsync<T>(
+  fn: () => Promise<T>,
+  deps: unknown[] = [],
+): AsyncState<T> & { reload: () => void } {
+  const [state, setState] = useState<AsyncState<T>>({
+    data: null,
+    loading: true,
+    error: null,
+  });
+  const [tick, setTick] = useState(0);
+  const fnRef = useRef(fn);
+  fnRef.current = fn;
+
+  useEffect(() => {
+    let alive = true;
+    const load = () => {
+      setState((s) => ({ ...s, loading: true, error: null }));
+      fnRef.current()
+        .then((data) => alive && setState({ data, loading: false, error: null }))
+        .catch((error) => {
+          console.error("LUCOMI data request failed:", error);
+          alive &&
+            setState({
+              data: null,
+              loading: false,
+              error: "Something went wrong. Please try again.",
+            });
+        });
+    };
+
+    load();
+    const unsubscribe = subscribeToDataChanges(load);
+
+    return () => {
+      alive = false;
+      unsubscribe();
+    };
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [tick, ...deps]);
+
+  return { ...state, reload: () => setTick((t) => t + 1) };
+}
+
+export function uploadToCloudinary(
+  file: File,
+  folder = "lucomi",
+  onProgress?: (progress: number) => void,
+): Promise<string> {
+  const cloudName = import.meta.env.VITE_CLOUDINARY_CLOUD_NAME as string | undefined;
+  const uploadPreset = import.meta.env.VITE_CLOUDINARY_UPLOAD_PRESET as string | undefined;
+
+  if (!cloudName || !uploadPreset) {
+    return Promise.reject(
+      new Error(
+        "Cloudinary is not configured yet. Add the Cloudinary cloud name and unsigned upload preset in Vercel.",
+      ),
+    );
+  }
+
+  return new Promise((resolve, reject) => {
+    const xhr = new XMLHttpRequest();
+    const formData = new FormData();
+
+    formData.append("file", file);
+    formData.append("upload_preset", uploadPreset);
+    formData.append("folder", folder);
+
+    xhr.open("POST", `https://api.cloudinary.com/v1_1/${cloudName}/image/upload`);
+    xhr.responseType = "json";
+
+    xhr.upload.onprogress = (event) => {
+      if (event.lengthComputable) {
+        onProgress?.(Math.round((event.loaded / event.total) * 100));
+      }
+    };
+
+    xhr.onload = () => {
+      if (xhr.status >= 200 && xhr.status < 300 && xhr.response?.secure_url) {
+        resolve(xhr.response.secure_url as string);
+        return;
+      }
+      reject(
+        new Error(
+          xhr.response?.error?.message || "Cloudinary rejected the image upload.",
+        ),
+      );
+    };
+
+    xhr.onerror = () =>
+      reject(new Error("Could not reach Cloudinary. Check your connection and try again."));
+    xhr.onabort = () => reject(new Error("Image upload was cancelled."));
+    xhr.send(formData);
+  });
+}
