@@ -20,6 +20,8 @@ import {
   query,
   setDoc,
   where,
+  orderBy,
+  limit,
   writeBatch,
   onSnapshot,
 } from "firebase/firestore";
@@ -270,7 +272,7 @@ export const api = {
   notifications: {
     list: async () => {
       if (!(await isCurrentAdmin())) return [];
-      const snapshot = await getDocs(collection(db, "notifications"));
+      const snapshot = await getDocs(query(collection(db, "notifications"), orderBy("createdAt", "desc"), limit(30)));
       return wait(
         snapshot.docs
           .map((item) => notificationFromDoc(item.id, item.data()))
@@ -281,12 +283,15 @@ export const api = {
     subscribe: (listener: (items: AdminNotification[]) => void) => {
       // The caller already gates this listener with the resolved admin role.
       // Firestore Rules remain the authoritative security boundary.
-      return onSnapshot(collection(db, "notifications"), (snapshot) => {
+      return onSnapshot(
+        query(collection(db, "notifications"), orderBy("createdAt", "desc"), limit(30)),
+        (snapshot) => {
         const items = snapshot.docs
           .map((item) => notificationFromDoc(item.id, item.data()))
           .sort((a, b) => b.createdAt.localeCompare(a.createdAt));
-        listener(items);
-      }, () => {
+          listener(items);
+        },
+        () => {
         // Non-admin/expired sessions are denied by Firestore Rules; keep the
         // public site quiet rather than surfacing an authorization error.
         listener([]);
