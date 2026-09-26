@@ -106,12 +106,21 @@ export default function Account() {
         return;
       }
 
+      const profileImageChanged = photoURL !== (user.photoURL ?? "");
       await updateUser({
         name: name.trim() || user.name,
         phone: phone.trim() || undefined,
-        photoURL: photoURL || undefined,
+        photoURL,
       });
-      setMessage("Profile details saved successfully.");
+      if (profileImageChanged && photoURL) {
+        if (!isAdmin) setProfileImageChangedAt(Timestamp.now());
+        setMessage("Profile picture updated successfully. Your profile has been saved.");
+      } else if (profileImageChanged && !photoURL) {
+        if (!isAdmin) setProfileImageChangedAt(Timestamp.now());
+        setMessage("Profile picture removed successfully. Your profile has been saved.");
+      } else {
+        setMessage("Profile updated successfully. Your changes have been saved.");
+      }
     } catch (error) {
       console.error("Profile save failed:", error);
       setMessage("We couldn't save your profile. Please try again.");
