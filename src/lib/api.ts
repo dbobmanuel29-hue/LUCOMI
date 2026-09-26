@@ -215,6 +215,18 @@ export async function seedCatalogue() {
   return { categories: mock.categories.length, products: mock.products.length };
 }
 
+const DATA_CHANGED_EVENT = "lucomi:data-changed";
+
+function notifyDataChanged() {
+  if (typeof window !== "undefined") window.dispatchEvent(new Event(DATA_CHANGED_EVENT));
+}
+
+function subscribeToDataChanges(listener: () => void) {
+  if (typeof window === "undefined") return () => {};
+  window.addEventListener(DATA_CHANGED_EVENT, listener);
+  return () => window.removeEventListener(DATA_CHANGED_EVENT, listener);
+}
+
 export const api = {
   products: {
     list: async () => {
@@ -242,9 +254,7 @@ export const api = {
       const snapshot = await getDocs(
         query(collection(db, "products"), where("published", "==", true)),
       );
-      const items = snapshot.empty
-        ? mock.products.filter((p) => p.published)
-        : snapshot.docs.map((item) => productFromDoc(item.id, item.data()));
+      const items = snapshot.docs.map((item) => productFromDoc(item.id, item.data()));
       return wait(items.find((p) => p.slug === slug) ?? null);
     },
 
@@ -268,11 +278,13 @@ export const api = {
         updatedAt: new Date().toISOString().slice(0, 10),
       };
       await setDoc(doc(db, "products", id), value, { merge: true });
+      notifyDataChanged();
       return value;
     },
 
     remove: async (id: string) => {
       await deleteDoc(doc(db, "products", id));
+      notifyDataChanged();
       return true;
     },
   },
@@ -294,11 +306,13 @@ export const api = {
         slug: slugify(category.slug || category.name) || id,
       };
       await setDoc(doc(db, "categories", id), value, { merge: true });
+      notifyDataChanged();
       return value;
     },
 
     remove: async (id: string) => {
       await deleteDoc(doc(db, "categories", id));
+      notifyDataChanged();
       return true;
     },
   },
@@ -322,11 +336,13 @@ export const api = {
         createdAt: project.createdAt || new Date().toISOString().slice(0, 10),
       };
       await setDoc(doc(db, "projects", id), value, { merge: true });
+      notifyDataChanged();
       return value;
     },
 
     remove: async (id: string) => {
       await deleteDoc(doc(db, "projects", id));
+      notifyDataChanged();
       return true;
     },
   },
@@ -345,11 +361,13 @@ export const api = {
       const id = testimonial.id || `t-${Date.now()}`;
       const value = { ...testimonial, id };
       await setDoc(doc(db, "testimonials", id), value, { merge: true });
+      notifyDataChanged();
       return value;
     },
 
     remove: async (id: string) => {
       await deleteDoc(doc(db, "testimonials", id));
+      notifyDataChanged();
       return true;
     },
   },
@@ -381,6 +399,7 @@ export const api = {
         createdAt: enquiry.createdAt || new Date().toISOString().slice(0, 10),
       };
       await setDoc(doc(db, "enquiries", id), value);
+      notifyDataChanged();
       return value;
     },
 
@@ -419,11 +438,13 @@ export const api = {
       } else {
         await setDoc(doc(db, "team", id), value, { merge: true });
       }
+      notifyDataChanged();
       return value;
     },
 
     remove: async (id: string) => {
       await deleteDoc(doc(db, "team", id));
+      notifyDataChanged();
       return true;
     },
   },
@@ -454,6 +475,7 @@ export const api = {
 
     save: async (settings: BusinessSettings) => {
       await setDoc(doc(db, "settings", "business"), settings, { merge: true });
+      notifyDataChanged();
       return settings;
     },
   },
