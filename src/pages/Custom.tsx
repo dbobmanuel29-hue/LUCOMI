@@ -14,6 +14,8 @@ const SPACE_TYPES = [
   "Reception Area",
   "Open-Plan Workspace",
   "Government / Institutional Office",
+  "School Desk / Education Space",
+  "Gaming Workspace",
   "Home Office",
   "Other",
 ];
@@ -28,6 +30,8 @@ const FURNITURE = [
   "Filing Cabinets",
   "Office Storage",
   "Reception Furniture",
+  "School Desks",
+  "Gaming Workstations",
   "Complete Workspace Fit-Out",
 ];
 
@@ -78,6 +82,7 @@ export default function Custom() {
         furnitureType: form.furniture,
         quantity: form.quantity,
         description: `${form.description}\nSpace type: ${form.spaceType}\nDimensions: ${form.dimensions}\nDelivery: ${form.delivery}\nAdditional: ${form.extra}\nReference images: ${images.length}`,
+        images,
         preferredContact: form.preferredContact as "Phone" | "Email" | "WhatsApp",
         source: "Custom Furniture",
         status: "New",
