@@ -35,7 +35,7 @@ export interface Product {
   /** Never fabricated — empty string means the price is not published. */
   price: string;
   priceVisibility: PriceVisibility;
-  images: string[];
+  images?: string[];
   features: string[];
   materials: string;
   dimensions: string;
