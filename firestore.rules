@@ -168,6 +168,37 @@ service cloud.firestore {
       allow write: if isAdmin();
     }
 
+
+    match /notifications/{id} {
+      allow read: if isAdmin();
+
+      allow create: if isAdmin()
+        || (
+          signedIn()
+          && request.resource.data.actorUid == request.auth.uid
+          && request.resource.data.read == false
+          && request.resource.data.type in ["enquiry", "review"]
+          && request.resource.data.keys().hasOnly([
+            "id", "type", "title", "message", "link", "sourceId", "actorUid", "read", "createdAt"
+          ])
+          && (
+            (
+              request.resource.data.type == "enquiry"
+              && exists(/databases/$(database)/documents/enquiries/$(request.resource.data.sourceId))
+              && get(/databases/$(database)/documents/enquiries/$(request.resource.data.sourceId)).data.userId == request.auth.uid
+            )
+            ||
+            (
+              request.resource.data.type == "review"
+              && exists(/databases/$(database)/documents/testimonials/$(request.resource.data.sourceId))
+              && get(/databases/$(database)/documents/testimonials/$(request.resource.data.sourceId)).data.userId == request.auth.uid
+            )
+          )
+        );
+
+      allow update, delete: if isAdmin();
+    }
+
     match /auditLogs/{id} {
       allow read, write: if isAdmin();
     }
