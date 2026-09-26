@@ -94,7 +94,7 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
   const [isAdmin, setIsAdmin] = useState(false);
   const [authReady, setAuthReady] = useState(false);
 
-  const ensureUserProfile = async (firebaseUser: FirebaseUser) => {
+  const ensureUserProfile = async (firebaseUser: FirebaseUser, adminStatus: boolean) => {
     const ref = doc(db, "users", firebaseUser.uid);
     const snapshot = await getDoc(ref);
     const creationDate = firebaseUser.metadata.creationTime
@@ -102,9 +102,6 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
       : new Date();
     const createdAt = Timestamp.fromDate(creationDate);
     const retentionUntil = Timestamp.fromMillis(creationDate.getTime() + 365 * 24 * 60 * 60 * 1000);
-    const adminSnapshot = await getDoc(doc(db, "admins", firebaseUser.uid));
-    const isAdmin = adminSnapshot.exists() && adminSnapshot.data()?.role === "admin";
-
     if (!snapshot.exists()) {
       await setDoc(ref, {
         uid: firebaseUser.uid,
@@ -114,7 +111,7 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
         photoURL: firebaseUser.photoURL || "",
         provider: firebaseUser.providerData.some((item) => item.providerId === "google.com") ? "google" : "email",
         createdAt,
-        retentionUntil: isAdmin ? null : retentionUntil,
+        retentionUntil: adminStatus ? null : retentionUntil,
         lastLoginAt: firebaseUser.metadata.lastSignInTime
           ? Timestamp.fromDate(new Date(firebaseUser.metadata.lastSignInTime))
           : serverTimestamp(),
@@ -132,7 +129,7 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
 
       if (!snapshot.data()?.createdAt) {
         patch.createdAt = createdAt;
-        patch.retentionUntil = isAdmin ? null : retentionUntil;
+        patch.retentionUntil = adminStatus ? null : retentionUntil;
       }
 
       await setDoc(ref, patch, { merge: true });
@@ -147,10 +144,15 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
       setIsAdmin(false);
 
       if (firebaseUser) {
-        void ensureUserProfile(firebaseUser)
+        // Resolve the admin role immediately so admin-only navigation controls can
+        // render alongside the rest of the header instead of arriving a moment later.
+        void getDoc(doc(db, "admins", firebaseUser.uid))
+          .then((snapshot) => {
+            const adminStatus = snapshot.exists() && snapshot.data()?.role === "admin";
+            setIsAdmin(adminStatus);
+            return ensureUserProfile(firebaseUser, adminStatus);
+          })
           .then(async () => {
-            // Firestore is the source of truth for customer profile details
-            // that Firebase Auth does not store, such as the saved phone number.
             const profileSnapshot = await getDoc(doc(db, "users", firebaseUser.uid));
             const profile = profileSnapshot.data();
 
@@ -166,7 +168,7 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
             } : current);
           })
           .catch(() => {
-            // Profile persistence errors should not block authentication.
+            setIsAdmin(false);
           });
 
         heartbeat = window.setInterval(() => {
@@ -175,14 +177,6 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
             updatedAt: serverTimestamp(),
           }, { merge: true }).catch(() => {});
         }, 60_000);
-
-        void getDoc(doc(db, "admins", firebaseUser.uid))
-          .then((snapshot) => {
-            setIsAdmin(snapshot.exists() && snapshot.data()?.role === "admin");
-          })
-          .catch(() => {
-            setIsAdmin(false);
-          });
       }
     });
     return () => {
