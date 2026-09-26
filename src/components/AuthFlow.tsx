@@ -198,16 +198,8 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
     const nextName = changes.name?.trim() || current.displayName || current.email?.split("@")[0] || "LUCOMI User";
     const nextPhone = changes.phone?.trim() || "";
 
-    if (
-      (changes.name !== undefined && changes.name.trim() && changes.name.trim() !== current.displayName) ||
-      changes.phone !== undefined
-    ) {
-      await updateProfile(current, {
-        ...(changes.name !== undefined && changes.name.trim() && changes.name.trim() !== current.displayName
-          ? { displayName: changes.name.trim() }
-          : {}),
-        ...(changes.phone !== undefined ? { phoneNumber: nextPhone || null } : {}),
-      });
+    if (changes.name !== undefined && changes.name.trim() && changes.name.trim() !== current.displayName) {
+      await updateProfile(current, { displayName: changes.name.trim() });
     }
 
     const profileRef = doc(db, "users", current.uid);
