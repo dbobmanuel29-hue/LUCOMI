@@ -27,8 +27,6 @@ service cloud.firestore {
     }
 
     match /admins/{uid} {
-      // Admin role documents are managed manually/server-side.
-      // A signed-in user may only read their own admin record.
       allow read: if isOwner(uid);
       allow write: if false;
     }
@@ -44,7 +42,8 @@ service cloud.firestore {
           && request.resource.data.provider in ["email", "google"]
           && request.resource.data.keys().hasOnly([
             "uid", "name", "email", "phone", "photoURL", "provider",
-            "createdAt", "retentionUntil", "lastLoginAt", "lastSeenAt", "profileImageChangedAt", "updatedAt"
+            "createdAt", "retentionUntil", "lastLoginAt", "lastSeenAt",
+            "profileImageChangedAt", "updatedAt"
           ])
         );
 
@@ -57,7 +56,8 @@ service cloud.firestore {
           && (
             (
               request.resource.data.diff(resource.data).affectedKeys().hasOnly([
-                "name", "phone", "photoURL", "lastLoginAt", "lastSeenAt", "updatedAt"
+                "name", "phone", "photoURL", "lastLoginAt", "lastSeenAt",
+                "profileImageChangedAt", "updatedAt"
               ])
               && (
                 !request.resource.data.diff(resource.data).affectedKeys().hasAny(["photoURL"])
