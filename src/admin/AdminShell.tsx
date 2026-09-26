@@ -149,12 +149,19 @@ export function AdminNotifications() {
   useEffect(() => api.notifications.subscribe(setNotifications), []);
 
   const unread = notifications.filter((item) => !item.read);
+
   const openNotification = async (item: AdminNotification) => {
-    if (!item.read) {
-      await api.notifications.markRead(item.id);
+    try {
+      if (!item.read) await api.notifications.markRead(item.id);
+    } finally {
+      setOpen(false);
+      navigate(item.link);
     }
-    setOpen(false);
-    navigate(item.link);
+  };
+
+  const markAllRead = async () => {
+    if (unread.length === 0) return;
+    await api.notifications.markAllRead(unread.map((item) => item.id));
   };
 
   return (
@@ -162,11 +169,14 @@ export function AdminNotifications() {
       <button
         type="button"
         onClick={() => setOpen((value) => !value)}
-        className="relative flex h-10 shrink-0 items-center justify-center gap-2 rounded-lg border border-line bg-white px-2.5 text-ink transition-colors hover:border-ink/40 sm:w-auto sm:px-3"
+        className={cn(
+          "relative flex h-10 shrink-0 items-center justify-center gap-2 rounded-lg border bg-white px-2.5 text-ink transition-all hover:border-ink/40 sm:px-3",
+          unread.length > 0 ? "border-royal/40" : "border-line",
+        )}
         aria-label={unread.length ? `${unread.length} unread notifications` : "Notifications"}
         aria-expanded={open}
       >
-        <Bell className="h-4 w-4 shrink-0" />
+        <Bell className={cn("h-4 w-4 shrink-0", unread.length > 0 && "text-royal")} />
         <span className="hidden text-[12px] font-semibold sm:inline">Notifications</span>
         {unread.length > 0 && (
           <span className="absolute -right-1 -top-1 flex min-h-5 min-w-5 items-center justify-center rounded-full bg-royal px-1 text-[10px] font-bold text-white ring-2 ring-paper">
@@ -177,20 +187,27 @@ export function AdminNotifications() {
 
       {open && (
         <>
-          <button className="fixed inset-0 z-40 cursor-default" aria-label="Close notifications" onClick={() => setOpen(false)} />
-          <div className="absolute right-0 top-12 z-50 w-[min(360px,calc(100vw-2rem))] overflow-hidden rounded-xl border border-line bg-white plate-shadow-lg">
-            <div className="flex items-center justify-between border-b border-line px-4 py-3">
-              <div>
+          <button
+            className="fixed inset-0 z-40 cursor-default bg-transparent"
+            aria-label="Close notifications"
+            onClick={() => setOpen(false)}
+          />
+
+          <div className="fixed inset-x-3 top-[68px] z-50 overflow-hidden rounded-xl border border-line bg-white plate-shadow-lg sm:absolute sm:inset-x-auto sm:right-0 sm:top-12 sm:w-[min(390px,calc(100vw-2rem))]">
+            <div className="flex items-start justify-between gap-3 border-b border-line px-4 py-3 sm:px-5">
+              <div className="min-w-0">
                 <p className="text-sm font-semibold text-ink">Notifications</p>
-                <p className="mt-0.5 text-[11.5px] text-mute">{unread.length ? `${unread.length} unread` : "You're all caught up"}</p>
+                <p className="mt-0.5 text-[11.5px] text-mute">
+                  {unread.length ? `${unread.length} unread` : "You're all caught up"}
+                </p>
               </div>
-              {unread.length > 0 && (
-                <div className="flex items-center gap-3">
+
+              <div className="flex shrink-0 items-center gap-2">
                 {unread.length > 0 && (
                   <button
                     type="button"
                     className="micro text-royal hover:text-ink"
-                    onClick={() => void api.notifications.markAllRead(unread.map((item) => item.id))}
+                    onClick={() => void markAllRead()}
                   >
                     Mark all read
                   </button>
@@ -205,14 +222,16 @@ export function AdminNotifications() {
                   <X className="h-4 w-4" />
                 </button>
               </div>
-              )}
             </div>
-            <div className="max-h-[420px] overflow-y-auto">
+
+            <div className="max-h-[min(65vh,460px)] overflow-y-auto overscroll-contain">
               {notifications.length === 0 ? (
                 <div className="px-5 py-10 text-center">
                   <Bell className="mx-auto h-6 w-6 text-mute" />
                   <p className="mt-3 text-sm font-semibold">No notifications yet</p>
-                  <p className="mt-1 text-[12.5px] text-mute">New enquiries and customer reviews will appear here.</p>
+                  <p className="mt-1 text-[12.5px] leading-relaxed text-mute">
+                    New enquiries and customer reviews will appear here.
+                  </p>
                 </div>
               ) : (
                 notifications.slice(0, 30).map((item) => (
@@ -220,17 +239,44 @@ export function AdminNotifications() {
                     key={item.id}
                     type="button"
                     onClick={() => void openNotification(item)}
-                    className={cn("flex w-full gap-3 border-b border-line px-4 py-3 text-left transition-colors hover:bg-plate", !item.read && "bg-royal/[0.045]")}
+                    className={cn(
+                      "flex w-full gap-3 border-b border-line px-4 py-3 text-left transition-colors hover:bg-plate active:bg-plate sm:px-5",
+                      !item.read && "bg-royal/[0.045]",
+                    )}
                   >
-                    <span className={cn("mt-0.5 flex h-8 w-8 shrink-0 items-center justify-center rounded-full", item.type === "review" ? "bg-royal/10 text-royal" : "bg-ink/5 text-ink")}>
+                    <span
+                      className={cn(
+                        "mt-0.5 flex h-8 w-8 shrink-0 items-center justify-center rounded-full",
+                        item.type === "review"
+                          ? "bg-royal/10 text-royal"
+                          : "bg-ink/5 text-ink",
+                      )}
+                    >
                       {item.read ? <Check className="h-4 w-4" /> : <Bell className="h-4 w-4" />}
                     </span>
+
                     <span className="min-w-0 flex-1">
-                      <span className={cn("block text-[13px]", !item.read ? "font-semibold text-ink" : "font-medium text-charcoal")}>{item.title}</span>
-                      <span className="mt-1 block text-[12px] leading-relaxed text-mute">{item.message}</span>
-                      <span className="mt-1.5 block text-[10.5px] uppercase tracking-[0.08em] text-mute">{new Date(item.createdAt).toLocaleString()}</span>
+                      <span
+                        className={cn(
+                          "block text-[13px]",
+                          !item.read
+                            ? "font-semibold text-ink"
+                            : "font-medium text-charcoal",
+                        )}
+                      >
+                        {item.title}
+                      </span>
+                      <span className="mt-1 block break-words text-[12px] leading-relaxed text-mute">
+                        {item.message}
+                      </span>
+                      <span className="mt-1.5 block text-[10.5px] uppercase tracking-[0.08em] text-mute">
+                        {new Date(item.createdAt).toLocaleString()}
+                      </span>
                     </span>
-                    {!item.read && <span className="mt-2 h-2 w-2 shrink-0 rounded-full bg-royal" />}
+
+                    {!item.read && (
+                      <span className="mt-2 h-2 w-2 shrink-0 rounded-full bg-royal" aria-hidden="true" />
+                    )}
                   </button>
                 ))
               )}
