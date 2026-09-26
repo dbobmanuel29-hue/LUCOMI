@@ -125,7 +125,7 @@ export function AdminProjects() {
             <Field label="Description">
               <Textarea value={editing.description} onChange={(e) => setEditing({ ...editing, description: e.target.value })} />
             </Field>
-            <ImageUpload value={editing.images} onChange={(urls) => setEditing({ ...editing, images: urls })} label="Project Gallery" />
+            <ImageUpload value={editing.images} onChange={(urls) => setEditing({ ...editing, images: urls })} folder="lucomi/projects" label="Project Gallery" />
             <div className="flex flex-wrap gap-4 rounded-lg bg-plate px-5 py-4">
               <label className="flex items-center gap-2 text-[14px]">
                 <input
@@ -293,7 +293,7 @@ export function AdminTestimonials() {
             <Field label="Testimonial" required>
               <Textarea value={editing.content} onChange={(e) => setEditing({ ...editing, content: e.target.value })} />
             </Field>
-            <ImageUpload value={editing.image ? [editing.image] : []} onChange={(urls) => setEditing({ ...editing, image: urls[0] ?? "" })} max={1} label="Customer Image (optional)" />
+            <ImageUpload value={editing.image ? [editing.image] : []} onChange={(urls) => setEditing({ ...editing, image: urls[0] ?? "" })} folder="lucomi/testimonials" max={1} label="Customer Image (optional)" />
             {!editing.placeholder && (
               <p className="rounded-lg bg-plate px-4 py-3 text-[13px] leading-relaxed text-mute">
                 Confirm the customer has permitted publication of their name and review before checking Published.
@@ -315,7 +315,7 @@ export function AdminTestimonials() {
                 onChange={(e) => setEditing({ ...editing, placeholder: e.target.checked })}
                 className="h-4 w-4 accent-[#1560E8]"
               />
-              Publish this project on the website
+              Mark as sample content
             </label>
             <div className="flex gap-3">
               <Button
@@ -439,6 +439,7 @@ export function AdminTeam() {
             <ImageUpload
               value={editing.image ? [editing.image] : []}
               onChange={(urls) => setEditing({ ...editing, image: urls[0] ?? "" })}
+              folder="lucomi/team"
               max={1}
               label="Portrait Photo"
             />
