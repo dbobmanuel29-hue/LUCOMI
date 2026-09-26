@@ -9,6 +9,7 @@ import type {
   Project,
   TeamMember,
   Testimonial,
+  AdminNotification,
 } from "./types";
 import {
   collection,
@@ -20,6 +21,7 @@ import {
   setDoc,
   where,
   writeBatch,
+  onSnapshot,
 } from "firebase/firestore";
 import { auth, db } from "./firebase";
 
@@ -120,6 +122,20 @@ function teamFromDoc(id: string, data: Record<string, unknown>): TeamMember {
   };
 }
 
+function notificationFromDoc(id: string, data: Record<string, unknown>): AdminNotification {
+  return {
+    id,
+    type: data.type === "review" ? "review" : "enquiry",
+    title: asString(data.title),
+    message: asString(data.message),
+    link: asString(data.link),
+    sourceId: asString(data.sourceId),
+    actorUid: asString(data.actorUid),
+    read: data.read === true,
+    createdAt: asString(data.createdAt),
+  };
+}
+
 function enquiryFromDoc(id: string, data: Record<string, unknown>): Enquiry {
   return {
     id,
@@ -159,6 +175,11 @@ async function isCurrentAdmin() {
   if (!user) return false;
   const snapshot = await getDoc(doc(db, "admins", user.uid));
   return snapshot.exists() && snapshot.data()?.role === "admin";
+}
+
+async function createAdminNotification(input: Omit<AdminNotification, "id">) {
+  const id = `n-${Date.now()}-${Math.random().toString(36).slice(2, 8)}`;
+  await setDoc(doc(db, "notifications", id), { ...input, id });
 }
 
 function slugify(value: string) {
@@ -227,7 +248,49 @@ function subscribeToDataChanges(listener: () => void) {
   return () => window.removeEventListener(DATA_CHANGED_EVENT, listener);
 }
 
-export const api = {
+export const api = {\n  notifications: {
+    list: async () => {
+      if (!(await isCurrentAdmin())) return [];
+      const snapshot = await getDocs(collection(db, "notifications"));
+      return wait(
+        snapshot.docs
+          .map((item) => notificationFromDoc(item.id, item.data()))
+          .sort((a, b) => b.createdAt.localeCompare(a.createdAt)),
+      );
+    },
+
+    subscribe: (listener: (items: AdminNotification[]) => void) => {
+      let active = true;
+      let unsubscribe = () => {};
+      void isCurrentAdmin().then((admin) => {
+        if (!active || !admin) return;
+        unsubscribe = onSnapshot(collection(db, "notifications"), (snapshot) => {
+          const items = snapshot.docs
+            .map((item) => notificationFromDoc(item.id, item.data()))
+            .sort((a, b) => b.createdAt.localeCompare(a.createdAt));
+          listener(items);
+        });
+      });
+      return () => {
+        active = false;
+        unsubscribe();
+      };
+    },
+
+    markRead: async (id: string) => {
+      if (!(await isCurrentAdmin())) return;
+      await setDoc(doc(db, "notifications", id), { read: true }, { merge: true });
+    },
+
+    markAllRead: async (ids: string[]) => {
+      if (!(await isCurrentAdmin()) || ids.length === 0) return;
+      const batch = writeBatch(db);
+      ids.forEach((id) => batch.set(doc(db, "notifications", id), { read: true }, { merge: true }));
+      await batch.commit();
+    },
+  },
+
+
   products: {
     list: async () => {
       const admin = await isCurrentAdmin();
@@ -361,6 +424,22 @@ export const api = {
       const id = testimonial.id || `t-${Date.now()}`;
       const value = { ...testimonial, id };
       await setDoc(doc(db, "testimonials", id), value, { merge: true });
+      if (!value.placeholder && value.published === false && value.userId) {
+        try {
+          await createAdminNotification({
+            type: "review",
+            title: "New review awaiting approval",
+            message: `${value.customerName} submitted a customer review.`,
+            link: "/admin/testimonials",
+            sourceId: id,
+            actorUid: value.userId,
+            read: false,
+            createdAt: new Date().toISOString(),
+          });
+        } catch (notificationError) {
+          console.error("LUCOMI notification could not be created:", notificationError);
+        }
+      }
       notifyDataChanged();
       return value;
     },
@@ -399,6 +478,20 @@ export const api = {
         createdAt: enquiry.createdAt || new Date().toISOString().slice(0, 10),
       };
       await setDoc(doc(db, "enquiries", id), value);
+      try {
+        await createAdminNotification({
+          type: "enquiry",
+          title: "New enquiry received",
+          message: `${value.fullName} sent a ${value.source.toLowerCase()} for ${value.furnitureType}.`,
+          link: "/admin/enquiries",
+          sourceId: id,
+          actorUid: user.uid,
+          read: false,
+          createdAt: new Date().toISOString(),
+        });
+      } catch (notificationError) {
+        console.error("LUCOMI notification could not be created:", notificationError);
+      }
       notifyDataChanged();
       return value;
     },
