@@ -279,21 +279,18 @@ export const api = {
     },
 
     subscribe: (listener: (items: AdminNotification[]) => void) => {
-      let active = true;
-      let unsubscribe = () => {};
-      void isCurrentAdmin().then((admin) => {
-        if (!active || !admin) return;
-        unsubscribe = onSnapshot(collection(db, "notifications"), (snapshot) => {
-          const items = snapshot.docs
-            .map((item) => notificationFromDoc(item.id, item.data()))
-            .sort((a, b) => b.createdAt.localeCompare(a.createdAt));
-          listener(items);
-        });
+      // The caller already gates this listener with the resolved admin role.
+      // Firestore Rules remain the authoritative security boundary.
+      return onSnapshot(collection(db, "notifications"), (snapshot) => {
+        const items = snapshot.docs
+          .map((item) => notificationFromDoc(item.id, item.data()))
+          .sort((a, b) => b.createdAt.localeCompare(a.createdAt));
+        listener(items);
+      }, () => {
+        // Non-admin/expired sessions are denied by Firestore Rules; keep the
+        // public site quiet rather than surfacing an authorization error.
+        listener([]);
       });
-      return () => {
-        active = false;
-        unsubscribe();
-      };
     },
 
     markRead: async (id: string) => {
