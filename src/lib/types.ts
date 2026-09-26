@@ -139,3 +139,18 @@ export interface AdminUser {
   name: string;
   role: "admin" | "editor";
 }
+
+
+export type NotificationType = "enquiry" | "review";
+
+export interface AdminNotification {
+  id: string;
+  type: NotificationType;
+  title: string;
+  message: string;
+  link: string;
+  sourceId: string;
+  actorUid: string;
+  read: boolean;
+  createdAt: string;
+}
