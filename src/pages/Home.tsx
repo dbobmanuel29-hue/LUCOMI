@@ -201,6 +201,19 @@ function Hero() {
 /* ------------------------------ featured ------------------------------ */
 const PATTERN = ["photo", "photo", "photo", "photo", "photo", "photo"] as const;
 
+const FEATURED_FALLBACKS: Record<string, string> = {
+  "executive-desks": IMG.executiveDesk,
+  workstations: IMG.workstations,
+  "conference-tables": IMG.conference,
+  "reception-desks": IMG.reception,
+  "office-chairs": IMG.chair,
+  storage: IMG.storage,
+};
+
+function featuredImage(product: Product) {
+  return product.images?.[0] || FEATURED_FALLBACKS[product.category] || IMG.hero;
+}
+
 function MosaicPhoto({ product, delay }: { product: Product; delay: number }) {
   return (
     <Reveal delay={delay} className="h-full">
@@ -209,7 +222,7 @@ function MosaicPhoto({ product, delay }: { product: Product; delay: number }) {
         className="group relative block h-full overflow-hidden rounded-xl bg-plate"
       >
         <img
-          src={product.images[0]}
+          src={featuredImage(product)}
           alt={`${product.name} by LUCOMI ENTERPRISE`}
           loading="lazy"
           className="h-full min-h-[240px] w-full object-cover transition-transform duration-700 group-hover:scale-[1.05]"
@@ -227,7 +240,7 @@ function MosaicPhoto({ product, delay }: { product: Product; delay: number }) {
 
 function Featured() {
   const { data, loading, error, reload } = useAsync(() => api.products.featured());
-  const items = (data ?? []).filter((product) => product.images?.[0]).slice(0, 6);
+  const items = (data ?? []).slice(0, 6);
 
   return (
     <section id="featured" className="shell scroll-mt-24 py-20 sm:py-28">
