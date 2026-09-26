@@ -141,7 +141,16 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
     const unsubscribe = onAuthStateChanged(auth, (firebaseUser) => {
       setAuthReady(true);
       setUser(firebaseUser ? mapFirebaseUser(firebaseUser) : null);
-      setIsAdmin(false);
+
+      let cachedAdmin = false;
+      if (firebaseUser) {
+        try {
+          cachedAdmin = sessionStorage.getItem("lucomi-admin-ui-uid") === firebaseUser.uid;
+        } catch {
+          cachedAdmin = false;
+        }
+      }
+      setIsAdmin(cachedAdmin);
 
       if (firebaseUser) {
         // Resolve the admin role immediately so admin-only navigation controls can
@@ -150,6 +159,15 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
           .then((snapshot) => {
             const adminStatus = snapshot.exists() && snapshot.data()?.role === "admin";
             setIsAdmin(adminStatus);
+            try {
+              if (adminStatus) {
+                sessionStorage.setItem("lucomi-admin-ui-uid", firebaseUser.uid);
+              } else {
+                sessionStorage.removeItem("lucomi-admin-ui-uid");
+              }
+            } catch {
+              // Session storage is only a visual startup hint, never a security boundary.
+            }
             return ensureUserProfile(firebaseUser, adminStatus);
           })
           .then(async () => {
@@ -249,7 +267,13 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
 
   const signOut = async () => {
     await firebaseSignOut(auth);
+    try {
+      sessionStorage.removeItem("lucomi-admin-ui-uid");
+    } catch {
+      /* storage unavailable */
+    }
     setUser(null);
+    setIsAdmin(false);
   };
 
   return (
