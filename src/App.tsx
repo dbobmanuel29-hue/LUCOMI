@@ -1,5 +1,5 @@
 import { useEffect, useState } from "react";
-import { AnimatePresence, motion } from "framer-motion";
+import { AnimatePresence, motion, useReducedMotion } from "framer-motion";
 import { BrowserRouter, Outlet, Route, Routes, useLocation } from "react-router-dom";
 import { FloatingWhatsApp, MobileCTABar, SiteFooter, SiteHeader } from "./components/Chrome";
 import { QuoteProvider } from "./components/QuoteFlow";
@@ -31,18 +31,23 @@ function ScrollToTop() {
 
 function PublicLayout() {
   const location = useLocation();
+  const reduce = useReducedMotion();
 
   return (
-    <motion.div initial={{ opacity: 0 }} animate={{ opacity: 1 }} transition={{ duration: 0.2, ease: "easeOut" }}>
+    <motion.div
+      initial={reduce ? false : { opacity: 0 }}
+      animate={{ opacity: 1 }}
+      transition={{ duration: reduce ? 0 : 0.16, ease: "easeOut" }}
+    >
       <SiteHeader />
       <main className="pb-[68px] lg:pb-0">
         <AnimatePresence mode="wait" initial={false}>
           <motion.div
             key={location.pathname}
-            initial={{ opacity: 0, y: 10 }}
+            initial={reduce ? false : { opacity: 0, y: 6 }}
             animate={{ opacity: 1, y: 0 }}
-            exit={{ opacity: 0, y: -8 }}
-            transition={{ duration: 0.32, ease: [0.22, 0.61, 0.36, 1] }}
+            exit={reduce ? undefined : { opacity: 0, y: -4 }}
+            transition={{ duration: reduce ? 0 : 0.2, ease: [0.22, 0.61, 0.36, 1] }}
           >
             <Outlet />
           </motion.div>
@@ -80,15 +85,14 @@ export default function App() {
   const [ready, setReady] = useState(false);
 
   useEffect(() => {
-    // Keep the branded intro loader visible for exactly 3 seconds,
-    // but never depend on the window "load" event. A slow/broken image,
-    // favicon, or third-party resource must not leave the app stuck.
+    // Keep the branded loader brief rather than forcing a multi-second wait.
+    // The app itself can continue loading its Firestore content behind skeletons.
     const timer = window.setTimeout(() => {
       setReady(true);
       requestAnimationFrame(() => {
         document.getElementById("initial-loader")?.remove();
       });
-    }, 3000);
+    }, 550);
 
     return () => window.clearTimeout(timer);
   }, []);
@@ -100,36 +104,36 @@ export default function App() {
       <AuthProvider>
         <QuoteProvider>
           <ScrollToTop />
-        <Routes>
-          <Route element={<PublicLayout />}>
-            <Route path="/" element={<Home />} />
-            <Route path="/about" element={<About />} />
-            <Route path="/team" element={<Team />} />
-            <Route path="/reviews" element={<Reviews />} />
-            <Route path="/products" element={<Products />} />
-            <Route path="/products/:slug" element={<ProductDetail />} />
-            <Route path="/custom" element={<Custom />} />
-            <Route path="/projects" element={<Projects />} />
-            <Route path="/contact" element={<Contact />} />
-            <Route path="/terms" element={<Terms />} />
-            <Route path="/privacy" element={<Privacy />} />
-            <Route path="/account" element={<Account />} />
-            <Route path="*" element={<NotFound />} />
-          </Route>
+          <Routes>
+            <Route element={<PublicLayout />}>
+              <Route path="/" element={<Home />} />
+              <Route path="/about" element={<About />} />
+              <Route path="/team" element={<Team />} />
+              <Route path="/reviews" element={<Reviews />} />
+              <Route path="/products" element={<Products />} />
+              <Route path="/products/:slug" element={<ProductDetail />} />
+              <Route path="/custom" element={<Custom />} />
+              <Route path="/projects" element={<Projects />} />
+              <Route path="/contact" element={<Contact />} />
+              <Route path="/terms" element={<Terms />} />
+              <Route path="/privacy" element={<Privacy />} />
+              <Route path="/account" element={<Account />} />
+              <Route path="*" element={<NotFound />} />
+            </Route>
 
-          <Route path="/admin/login" element={<AdminLogin />} />
-          <Route path="/admin" element={<AdminLayout />}>
-            <Route index element={<Dashboard />} />
-            <Route path="users" element={<AdminUsers />} />
-            <Route path="products" element={<AdminProducts />} />
-            <Route path="categories" element={<AdminCategories />} />
-            <Route path="projects" element={<AdminProjects />} />
-            <Route path="team" element={<AdminTeam />} />
-            <Route path="testimonials" element={<AdminTestimonials />} />
-            <Route path="enquiries" element={<AdminEnquiries />} />
-            <Route path="settings" element={<AdminSettings />} />
-          </Route>
-        </Routes>
+            <Route path="/admin/login" element={<AdminLogin />} />
+            <Route path="/admin" element={<AdminLayout />}>
+              <Route index element={<Dashboard />} />
+              <Route path="users" element={<AdminUsers />} />
+              <Route path="products" element={<AdminProducts />} />
+              <Route path="categories" element={<AdminCategories />} />
+              <Route path="projects" element={<AdminProjects />} />
+              <Route path="team" element={<AdminTeam />} />
+              <Route path="testimonials" element={<AdminTestimonials />} />
+              <Route path="enquiries" element={<AdminEnquiries />} />
+              <Route path="settings" element={<AdminSettings />} />
+            </Route>
+          </Routes>
         </QuoteProvider>
       </AuthProvider>
     </BrowserRouter>
