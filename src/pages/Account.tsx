@@ -24,9 +24,19 @@ export default function Account() {
 
   useEffect(() => {
     if (!user) return;
+
+    setName(user.name ?? "");
+    setPhone(user.phone ?? "");
+    setPhotoURL(user.photoURL ?? "");
+
     void getDoc(doc(db, "users", user.uid)).then((snapshot) => {
-      const value = snapshot.data()?.profileImageChangedAt;
+      const data = snapshot.data();
+      const value = data?.profileImageChangedAt;
       setProfileImageChangedAt(value instanceof Timestamp ? value : null);
+
+      if (typeof data?.name === "string" && data.name.trim()) setName(data.name);
+      if (typeof data?.phone === "string") setPhone(data.phone);
+      if (typeof data?.photoURL === "string") setPhotoURL(data.photoURL);
     }).catch(() => {});
   }, [user?.uid]);
 
@@ -57,12 +67,23 @@ export default function Account() {
       return;
     }
 
+    // Show the selected image immediately while Cloudinary uploads in the background.
+    // The preview is replaced with the permanent Cloudinary URL once the upload completes.
+    const localPreview = URL.createObjectURL(file);
+    setPhotoURL(localPreview);
+    setMessage("Profile image selected. Uploading...");
     setImageUploading(true);
+
     try {
       const url = await uploadToCloudinary(file, "lucomi/profiles");
       setPhotoURL(url);
       setMessage("Profile image uploaded. Tap Save Profile to keep it.");
+      URL.revokeObjectURL(localPreview);
     } catch (error) {
+      URL.revokeObjectURL(localPreview);
+      setPhotoURL(user?.photoURL ?? "");
+      setImageError(error instanceof Error ? error.message : "We couldn't upload that image. Please try again.");
+    } finally {
       setImageError(error instanceof Error ? error.message : "We couldn't upload that image. Please try again.");
     } finally {
       setImageUploading(false);
@@ -82,6 +103,11 @@ export default function Account() {
     setMessage("");
 
     try {
+      if (imageUploading) {
+        setMessage("Please wait for the profile image upload to finish before saving.");
+        return;
+      }
+
       await updateUser({
         name: name.trim() || user.name,
         phone: phone.trim() || undefined,
