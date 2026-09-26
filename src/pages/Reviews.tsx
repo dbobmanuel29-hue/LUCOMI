@@ -41,7 +41,7 @@ export default function Reviews() {
         product: form.product.trim(),
         content: form.content.trim(),
         rating,
-        image: "",
+        image: user?.photoURL ?? "",
         published: false,
         placeholder: false,
         createdAt: new Date().toISOString().slice(0, 10),
