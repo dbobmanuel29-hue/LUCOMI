@@ -482,11 +482,15 @@ export const api = {
         createdAt: enquiry.createdAt || new Date().toISOString().slice(0, 10),
       };
       await setDoc(doc(db, "enquiries", id), value);
+      // Every customer enquiry creates an admin notification, including custom project requests.
       try {
         await createAdminNotification({
           type: "enquiry",
-          title: "New enquiry received",
-          message: `${value.fullName} sent a ${value.source.toLowerCase()} for ${value.furnitureType}.`,
+          title: value.source === "Custom Furniture" ? "New custom project request" : "New enquiry received",
+          message:
+            value.source === "Custom Furniture"
+              ? `${value.fullName} submitted a custom furniture project request for ${value.furnitureType}.`
+              : `${value.fullName} sent a ${value.source.toLowerCase()} for ${value.furnitureType}.`,
           link: "/admin/enquiries",
           sourceId: id,
           actorUid: user.uid,
@@ -507,18 +511,18 @@ export const api = {
 
     remove: async (id: string) => {
       await deleteDoc(doc(db, "enquiries", id));
-
-      // Remove the admin notification tied to the deleted enquiry as well,
-      // so deleting an enquiry removes its notification trail from the dashboard.
-      const notificationSnapshot = await getDocs(
-        query(collection(db, "notifications"), where("sourceId", "==", id)),
-      );
-      if (!notificationSnapshot.empty) {
-        const batch = writeBatch(db);
-        notificationSnapshot.docs.forEach((item) => batch.delete(item.ref));
-        await batch.commit();
+      try {
+        const notificationSnapshot = await getDocs(
+          query(collection(db, "notifications"), where("sourceId", "==", id)),
+        );
+        if (!notificationSnapshot.empty) {
+          const batch = writeBatch(db);
+          notificationSnapshot.docs.forEach((item) => batch.delete(item.ref));
+          await batch.commit();
+        }
+      } catch (notificationError) {
+        console.warn("LUCOMI enquiry notification cleanup failed:", notificationError);
       }
-
       notifyDataChanged();
       return true;
     },
