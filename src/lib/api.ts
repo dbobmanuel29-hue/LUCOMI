@@ -422,9 +422,11 @@ export const api = {\n  notifications: {
 
     save: async (testimonial: Testimonial) => {
       const id = testimonial.id || `t-${Date.now()}`;
+      const ref = doc(db, "testimonials", id);
+      const existing = await getDoc(ref);
       const value = { ...testimonial, id };
-      await setDoc(doc(db, "testimonials", id), value, { merge: true });
-      if (!value.placeholder && value.published === false && value.userId) {
+      await setDoc(ref, value, { merge: true });
+      if (!existing.exists() && !value.placeholder && value.published === false && value.userId) {
         try {
           await createAdminNotification({
             type: "review",
