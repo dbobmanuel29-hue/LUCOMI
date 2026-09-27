@@ -41,10 +41,15 @@
     scroll-behavior: smooth;
     overflow-x: hidden;
     overflow-y: auto;
+    overscroll-behavior-y: auto;
+    touch-action: pan-y;
   }
   body {
     min-width: 320px;
-    overscroll-behavior-y: none;
+    min-height: 100%;
+    overscroll-behavior-y: auto;
+    touch-action: pan-y;
+    -webkit-overflow-scrolling: touch;
     background-color: var(--color-paper);
     color: var(--color-charcoal);
     font-family: var(--font-sans);
@@ -128,6 +133,7 @@
 @layer components {
   #root {
     min-height: 100%;
+    touch-action: pan-y;
   }
   .shell {
     width: 100%;
