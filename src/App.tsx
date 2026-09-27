@@ -88,16 +88,27 @@ export default function App() {
   const [ready, setReady] = useState(false);
 
   useEffect(() => {
-    // Keep the branded loader brief rather than forcing a multi-second wait.
-    // The app itself can continue loading its Firestore content behind skeletons.
-    const timer = window.setTimeout(() => {
-      setReady(true);
-      requestAnimationFrame(() => {
-        document.getElementById("initial-loader")?.remove();
-      });
-    }, 180);
+    // Reset any document-level scroll lock left behind by a previous mobile menu state.
+    // This is intentionally defensive for browsers that restore a page from cache.
+    document.body.style.overflow = "";
+    document.body.style.position = "";
+    document.body.style.top = "";
+    document.body.style.width = "";
+    document.documentElement.style.overscrollBehavior = "";
 
-    return () => window.clearTimeout(timer);
+    const revealApp = () => {
+      setReady(true);
+      document.getElementById("initial-loader")?.remove();
+    };
+
+    // Keep the branded loader brief, but never allow it to trap the page.
+    const timer = window.setTimeout(revealApp, 180);
+    const safetyTimer = window.setTimeout(revealApp, 1200);
+
+    return () => {
+      window.clearTimeout(timer);
+      window.clearTimeout(safetyTimer);
+    };
   }, []);
 
   if (!ready) return null;
