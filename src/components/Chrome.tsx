@@ -741,6 +741,12 @@ export function SiteFooter() {
             <Link to="/privacy" className="transition-colors hover:text-white">
               Privacy Policy
             </Link>
+            <Link to="/cookies" className="transition-colors hover:text-white">
+              Cookie Policy
+            </Link>
+            <button type="button" onClick={() => window.dispatchEvent(new CustomEvent("lucomi:open-cookie-settings"))} className="transition-colors hover:text-white">
+              Cookie Settings
+            </button>
             <p className="micro text-white/35">Port Harcourt, Nigeria</p>
           </div>
         </div>
