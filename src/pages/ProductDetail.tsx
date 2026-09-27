@@ -19,9 +19,53 @@ export default function ProductDetail() {
 
   useEffect(() => {
     if (!p) return;
+
+    const canonicalUrl = `https://lucomi.name.ng/products/${p.slug}`;
     document.title = `${p.name} — ${p.category.replace(/-/g, " ")} | LUCOMI ENTERPRISE`;
+
     const meta = document.querySelector('meta[name="description"]');
     if (meta) meta.setAttribute("content", p.shortDescription);
+
+    let canonical = document.querySelector<HTMLLinkElement>('link[rel="canonical"]');
+    if (!canonical) {
+      canonical = document.createElement("link");
+      canonical.rel = "canonical";
+      document.head.appendChild(canonical);
+    }
+    canonical.href = canonicalUrl;
+
+    const absoluteImages = (p.images ?? []).map((image) =>
+      image.startsWith("http") ? image : `https://lucomi.name.ng${image.startsWith("/") ? "" : "/"}${image}`,
+    );
+
+    const productSchema = {
+      "@context": "https://schema.org",
+      "@type": "Product",
+      name: p.name,
+      description: p.description,
+      image: absoluteImages,
+      sku: p.id,
+      category: p.category.replace(/-/g, " "),
+      brand: {
+        "@type": "Brand",
+        name: "LUCOMI ENTERPRISE",
+      },
+      url: canonicalUrl,
+      mainEntityOfPage: canonicalUrl,
+    };
+
+    const existingSchema = document.getElementById("lucomi-product-schema");
+    if (existingSchema) existingSchema.remove();
+
+    const schema = document.createElement("script");
+    schema.id = "lucomi-product-schema";
+    schema.type = "application/ld+json";
+    schema.textContent = JSON.stringify(productSchema);
+    document.head.appendChild(schema);
+
+    return () => {
+      document.getElementById("lucomi-product-schema")?.remove();
+    };
   }, [p]);
 
   if (product.loading) {
