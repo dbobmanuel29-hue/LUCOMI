@@ -8,6 +8,14 @@ import { ProductCard } from "../components/ProductCard";
 import { useQuote, WhatsAppLink } from "../components/QuoteFlow";
 import { Button, EmptyState, ErrorState, Micro, Reveal, SectionHead, Skeleton } from "../components/ui";
 
+function parseProductPrice(value: string) {
+  const normalized = value.replace(/[^0-9.,]/g, "").replace(/,/g, "");
+  if (!normalized) return null;
+
+  const parsed = Number(normalized);
+  return Number.isFinite(parsed) && parsed > 0 ? parsed : null;
+}
+
 export default function ProductDetail() {
   const { slug = "" } = useParams();
   const product = useAsync(() => api.products.bySlug(slug), [slug]);
@@ -21,7 +29,8 @@ export default function ProductDetail() {
     if (!p) return;
 
     const canonicalUrl = `https://lucomi.name.ng/products/${p.slug}`;
-    document.title = `${p.name} — ${p.category.replace(/-/g, " ")} | LUCOMI ENTERPRISE`;
+    const categoryName = p.category.replace(/-/g, " ");
+    document.title = `${p.name} — ${categoryName} | LUCOMI ENTERPRISE`;
 
     const meta = document.querySelector('meta[name="description"]');
     if (meta) meta.setAttribute("content", p.shortDescription);
@@ -35,36 +44,97 @@ export default function ProductDetail() {
     canonical.href = canonicalUrl;
 
     const absoluteImages = (p.images ?? []).map((image) =>
-      image.startsWith("http") ? image : `https://lucomi.name.ng${image.startsWith("/") ? "" : "/"}${image}`,
+      image.startsWith("http")
+        ? image
+        : `https://lucomi.name.ng${image.startsWith("/") ? "" : "/"}${image}`,
     );
 
-    const productSchema = {
+    const productSchema: Record<string, unknown> = {
       "@context": "https://schema.org",
       "@type": "Product",
+      "@id": `${canonicalUrl}#product`,
       name: p.name,
-      description: p.description,
+      description: p.description || p.shortDescription,
       image: absoluteImages,
       sku: p.id,
-      category: p.category.replace(/-/g, " "),
+      category: categoryName,
       brand: {
         "@type": "Brand",
         name: "LUCOMI ENTERPRISE",
       },
       url: canonicalUrl,
-      mainEntityOfPage: canonicalUrl,
+      mainEntityOfPage: {
+        "@type": "WebPage",
+        "@id": canonicalUrl,
+      },
     };
 
-    const existingSchema = document.getElementById("lucomi-product-schema");
-    if (existingSchema) existingSchema.remove();
+    // Only publish an Offer when LUCOMI has an actual public numeric price.
+    // Quote-only products should not get a fabricated price in structured data.
+    const numericPrice = p.priceVisibility === "visible" ? parseProductPrice(p.price) : null;
+    if (numericPrice !== null) {
+      productSchema.offers = {
+        "@type": "Offer",
+        url: canonicalUrl,
+        priceCurrency: "NGN",
+        price: numericPrice,
+        itemCondition: "https://schema.org/NewCondition",
+        availability: "https://schema.org/InStock",
+      };
+    }
 
-    const schema = document.createElement("script");
-    schema.id = "lucomi-product-schema";
-    schema.type = "application/ld+json";
-    schema.textContent = JSON.stringify(productSchema);
-    document.head.appendChild(schema);
+    const breadcrumbSchema = {
+      "@context": "https://schema.org",
+      "@type": "BreadcrumbList",
+      itemListElement: [
+        {
+          "@type": "ListItem",
+          position: 1,
+          name: "Home",
+          item: "https://lucomi.name.ng/",
+        },
+        {
+          "@type": "ListItem",
+          position: 2,
+          name: "Products",
+          item: "https://lucomi.name.ng/products",
+        },
+        {
+          "@type": "ListItem",
+          position: 3,
+          name: categoryName,
+          item: `https://lucomi.name.ng/products#${encodeURIComponent(p.category)}`,
+        },
+        {
+          "@type": "ListItem",
+          position: 4,
+          name: p.name,
+          item: canonicalUrl,
+        },
+      ],
+    };
+
+    const existingProductSchema = document.getElementById("lucomi-product-schema");
+    if (existingProductSchema) existingProductSchema.remove();
+
+    const existingBreadcrumbSchema = document.getElementById("lucomi-breadcrumb-schema");
+    if (existingBreadcrumbSchema) existingBreadcrumbSchema.remove();
+
+    const productScript = document.createElement("script");
+    productScript.id = "lucomi-product-schema";
+    productScript.type = "application/ld+json";
+    productScript.textContent = JSON.stringify(productSchema);
+    document.head.appendChild(productScript);
+
+    const breadcrumbScript = document.createElement("script");
+    breadcrumbScript.id = "lucomi-breadcrumb-schema";
+    breadcrumbScript.type = "application/ld+json";
+    breadcrumbScript.textContent = JSON.stringify(breadcrumbSchema);
+    document.head.appendChild(breadcrumbScript);
 
     return () => {
       document.getElementById("lucomi-product-schema")?.remove();
+      document.getElementById("lucomi-breadcrumb-schema")?.remove();
     };
   }, [p]);
 
