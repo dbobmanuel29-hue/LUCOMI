@@ -342,20 +342,9 @@ export function SiteHeader() {
     setSearchOpen(true);
   };
 
-  useEffect(() => {
-    if (!menuOpen) return;
+  // The mobile drawer is an overlay; keep the document scrollable so a
+  // browser cannot retain a stale body scroll-lock after navigation/cache restore.
 
-    // Only lock the document's vertical overflow while the mobile drawer is open.
-    // Avoid position:fixed here: some mobile browsers can retain that state after
-    // a navigation/cache restore and make the underlying homepage impossible to scroll.
-    const body = document.body;
-    const previousOverflow = body.style.overflow;
-    body.style.overflow = "hidden";
-
-    return () => {
-      body.style.overflow = previousOverflow;
-    };
-  }, [menuOpen]);
 
   return (
     <>
