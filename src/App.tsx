@@ -90,11 +90,15 @@ export default function App() {
   useEffect(() => {
     // Reset any document-level scroll lock left behind by a previous mobile menu state.
     // This is intentionally defensive for browsers that restore a page from cache.
-    document.body.style.overflow = "";
-    document.body.style.position = "";
-    document.body.style.top = "";
-    document.body.style.width = "";
-    document.documentElement.style.overscrollBehavior = "";
+    // Always restore a normal document scrolling context on app startup.
+    // This protects against browser cache restores carrying over a previous modal/menu lock.
+    document.body.style.overflow = "visible";
+    document.body.style.overflowY = "auto";
+    document.body.style.position = "static";
+    document.body.style.top = "auto";
+    document.body.style.width = "auto";
+    document.documentElement.style.overflowY = "auto";
+    document.documentElement.style.overscrollBehavior = "auto";
 
     const revealApp = () => {
       setReady(true);
