@@ -3,4 +3,4 @@ Allow: /
 Disallow: /admin
 Disallow: /account
 
-Sitemap: https://lucomienterprise.com/sitemap.xml
+Sitemap: https://lucomi.name.ng/sitemap.xml
