@@ -95,7 +95,7 @@ export default function App() {
       requestAnimationFrame(() => {
         document.getElementById("initial-loader")?.remove();
       });
-    }, 550);
+    }, 180);
 
     return () => window.clearTimeout(timer);
   }, []);
