@@ -345,33 +345,15 @@ export function SiteHeader() {
   useEffect(() => {
     if (!menuOpen) return;
 
-    // Lock the document itself while the mobile/tablet drawer is open.
-    // Using position: fixed as well as overflow:hidden prevents iOS/Android
-    // browsers from rubber-banding the page underneath the drawer.
-    const scrollY = window.scrollY;
+    // Only lock the document's vertical overflow while the mobile drawer is open.
+    // Avoid position:fixed here: some mobile browsers can retain that state after
+    // a navigation/cache restore and make the underlying homepage impossible to scroll.
     const body = document.body;
-    const html = document.documentElement;
-    const previous = {
-      overflow: body.style.overflow,
-      position: body.style.position,
-      top: body.style.top,
-      width: body.style.width,
-      overscrollBehavior: html.style.overscrollBehavior,
-    };
-
+    const previousOverflow = body.style.overflow;
     body.style.overflow = "hidden";
-    body.style.position = "fixed";
-    body.style.top = `-${scrollY}px`;
-    body.style.width = "100%";
-    html.style.overscrollBehavior = "none";
 
     return () => {
-      body.style.overflow = previous.overflow;
-      body.style.position = previous.position;
-      body.style.top = previous.top;
-      body.style.width = previous.width;
-      html.style.overscrollBehavior = previous.overscrollBehavior;
-      window.scrollTo(0, scrollY);
+      body.style.overflow = previousOverflow;
     };
   }, [menuOpen]);
 
