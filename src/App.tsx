@@ -2,6 +2,7 @@ import { useEffect, useState } from "react";
 import { AnimatePresence, motion, useReducedMotion } from "framer-motion";
 import { BrowserRouter, Outlet, Route, Routes, useLocation } from "react-router-dom";
 import { FloatingWhatsApp, MobileCTABar, SiteFooter, SiteHeader } from "./components/Chrome";
+import CookieConsent from "./components/CookieConsent";
 import { QuoteProvider } from "./components/QuoteFlow";
 import { AuthProvider } from "./components/AuthFlow";
 import { Button, Micro } from "./components/ui";
@@ -16,6 +17,7 @@ import Team from "./pages/Team";
 import Reviews from "./pages/Reviews";
 import Account from "./pages/Account";
 import { Privacy, Terms } from "./pages/Legal";
+import { Cookies } from "./pages/Cookies";
 import { AdminLayout, AdminLogin, Dashboard } from "./admin/AdminShell";
 import { AdminCategories, AdminProducts } from "./admin/AdminCatalog";
 import { AdminUsers } from "./admin/AdminUsers";
@@ -56,6 +58,7 @@ function PublicLayout() {
       <SiteFooter />
       <FloatingWhatsApp />
       <MobileCTABar />
+      <CookieConsent />
     </motion.div>
   );
 }
@@ -117,6 +120,7 @@ export default function App() {
               <Route path="/contact" element={<Contact />} />
               <Route path="/terms" element={<Terms />} />
               <Route path="/privacy" element={<Privacy />} />
+              <Route path="/cookies" element={<Cookies />} />
               <Route path="/account" element={<Account />} />
               <Route path="*" element={<NotFound />} />
             </Route>
