@@ -379,7 +379,12 @@ export function SiteHeader() {
     <>
       <header
         className={cn(
-          "fixed inset-x-0 top-0 z-[70] border-b border-line/80 bg-paper shadow-[0_1px_0_rgba(10,42,94,0.06),0_10px_30px_-24px_rgba(10,42,94,0.22)]",
+          cn(
+          "fixed inset-x-0 top-0 z-[70] border-b transition-[background-color,box-shadow,backdrop-filter] duration-300",
+          scrolled
+            ? "border-line/60 bg-paper/90 shadow-[0_8px_30px_-24px_rgba(10,42,94,0.35)] backdrop-blur-xl"
+            : "border-line/80 bg-paper shadow-[0_1px_0_rgba(10,42,94,0.06),0_10px_30px_-24px_rgba(10,42,94,0.22)]",
+        ),
         )}
       >
         <div className="shell flex h-[68px] items-center justify-between gap-3 sm:h-[72px] sm:gap-4 xl:h-[76px] xl:gap-6">
