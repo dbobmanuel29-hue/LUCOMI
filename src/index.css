@@ -43,6 +43,7 @@
   }
   body {
     min-width: 320px;
+    overscroll-behavior-y: none;
     background-color: var(--color-paper);
     color: var(--color-charcoal);
     font-family: var(--font-sans);
@@ -81,6 +82,14 @@
   }
   img {
     display: block;
+    backface-visibility: hidden;
+  }
+  a,
+  button,
+  input,
+  select,
+  textarea {
+    transition-timing-function: cubic-bezier(0.22, 0.61, 0.36, 1);
   }
   button,
   a {
