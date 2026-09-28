@@ -1,12 +1,14 @@
 import { useEffect, useRef, useState } from "react";
 import { Link, Navigate } from "react-router-dom";
-import { Camera, LockKeyhole, Phone, Save, UserCircle, X } from "lucide-react";
+import { Camera, ClipboardList, LockKeyhole, Phone, Save, UserCircle, X } from "lucide-react";
 import { useAuth } from "../components/AuthFlow";
 import { doc, getDoc, Timestamp } from "firebase/firestore";
 import { EmailAuthProvider, reauthenticateWithCredential, updatePassword } from "firebase/auth";
 import { auth } from "../lib/firebase";
 import { db } from "../lib/firebase";
 import { uploadToCloudinary } from "../lib/api";
+import { api, useAsync } from "../lib/api";
+import type { Enquiry } from "../lib/types";
 import { Button, Field, Input, Micro, Notice, Reveal, usePageMeta } from "../components/ui";
 
 export default function Account() {
@@ -24,6 +26,7 @@ export default function Account() {
   const [saving, setSaving] = useState(false);
   const [imageError, setImageError] = useState("");
   const fileInputRef = useRef<HTMLInputElement>(null);
+  const enquiries = useAsync<Enquiry[]>(() => api.enquiries.list(), [user?.uid]);
 
   useEffect(() => {
     if (!user) return;
@@ -263,6 +266,65 @@ export default function Account() {
                   <Button type="submit" disabled={saving}><Save className="h-4 w-4" /> {saving ? "Saving..." : "Save Profile"}</Button>
                 </div>
               </form>
+            </Reveal>
+
+            <Reveal>
+              <section className="rounded-2xl border border-line bg-white p-5 sm:p-8">
+                <div className="flex items-center gap-3 border-b border-line pb-5">
+                  <ClipboardList className="h-6 w-6 text-royal" />
+                  <div>
+                    <h2 className="display text-2xl">My enquiries</h2>
+                    <p className="mt-1 text-xs text-mute">Keep track of furniture and project requests you have sent to LUCOMI.</p>
+                  </div>
+                </div>
+
+                <div className="mt-6">
+                  {enquiries.loading && (
+                    <div className="rounded-xl border border-line bg-plate/50 p-5 text-sm text-mute">Loading your enquiries...</div>
+                  )}
+
+                  {!enquiries.loading && enquiries.error && (
+                    <div className="rounded-xl border border-line bg-plate/50 p-5 text-sm text-mute">
+                      We couldn't load your enquiries right now. Please refresh the page and try again.
+                    </div>
+                  )}
+
+                  {!enquiries.loading && !enquiries.error && enquiryItems.length === 0 && (
+                    <div className="rounded-xl border border-dashed border-line bg-plate/40 p-6 text-center">
+                      <ClipboardList className="mx-auto h-8 w-8 text-mute" />
+                      <h3 className="mt-3 font-semibold text-ink">No enquiries yet</h3>
+                      <p className="mx-auto mt-2 max-w-md text-sm leading-relaxed text-mute">
+                        When you send a furniture enquiry, quote request or custom project request, it will appear here.
+                      </p>
+                      <Link to="/products" className="mt-4 inline-flex text-sm font-semibold text-royal hover:underline">Explore furniture</Link>
+                    </div>
+                  )}
+
+                  {!enquiries.loading && !enquiries.error && enquiryItems.length > 0 && (
+                    <div className="space-y-4">
+                      {enquiryItems.map((enquiry) => (
+                        <article key={enquiry.id} className="rounded-xl border border-line bg-plate/40 p-4 sm:p-5">
+                          <div className="flex flex-col gap-3 sm:flex-row sm:items-start sm:justify-between">
+                            <div className="min-w-0">
+                              <p className="text-xs font-semibold uppercase tracking-[0.14em] text-royal">{enquiry.source}</p>
+                              <h3 className="mt-1 text-lg font-semibold text-ink">{enquiry.furnitureType || "Furniture enquiry"}</h3>
+                              <p className="mt-1 text-xs text-mute">Submitted {enquiry.createdAt}</p>
+                            </div>
+                            <span className="inline-flex w-fit rounded-full border border-line bg-white px-3 py-1 text-xs font-semibold text-ink">{enquiry.status}</span>
+                          </div>
+                          <p className="mt-4 text-sm leading-relaxed text-mute">{enquiry.description || "No additional description provided."}</p>
+                          <div className="mt-4 grid gap-3 border-t border-line pt-4 text-xs text-mute sm:grid-cols-2">
+                            <p><span className="font-semibold text-ink">Quantity:</span> {enquiry.quantity || "Not specified"}</p>
+                            <p><span className="font-semibold text-ink">Preferred contact:</span> {enquiry.preferredContact}</p>
+                            {enquiry.companyName && <p><span className="font-semibold text-ink">Company:</span> {enquiry.companyName}</p>}
+                            {enquiry.images.length > 0 && <p><span className="font-semibold text-ink">Reference images:</span> {enquiry.images.length}</p>}
+                          </div>
+                        </article>
+                      ))}
+                    </div>
+                  )}
+                </div>
+              </section>
             </Reveal>
 
             {user.provider === "email" && (
