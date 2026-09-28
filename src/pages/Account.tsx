@@ -3,6 +3,8 @@ import { Link, Navigate } from "react-router-dom";
 import { Camera, LockKeyhole, Phone, Save, UserCircle, X } from "lucide-react";
 import { useAuth } from "../components/AuthFlow";
 import { doc, getDoc, Timestamp } from "firebase/firestore";
+import { EmailAuthProvider, reauthenticateWithCredential, updatePassword } from "firebase/auth";
+import { auth } from "../lib/firebase";
 import { db } from "../lib/firebase";
 import { uploadToCloudinary } from "../lib/api";
 import { Button, Field, Input, Micro, Notice, Reveal, usePageMeta } from "../components/ui";
@@ -137,15 +139,30 @@ export default function Account() {
     }
   };
 
-  const changePassword = (event: React.FormEvent) => {
+  const changePassword = async (event: React.FormEvent) => {
     event.preventDefault();
+    if (!auth.currentUser?.email) {
+      setMessage("Please sign in with email and password to change your password.");
+      return;
+    }
     if (newPassword.length < 6) {
       setMessage("Your new password must be at least 6 characters.");
       return;
     }
-    setCurrentPassword("");
-    setNewPassword("");
-    setMessage("Password change saved for this frontend demo. Firebase Authentication will handle the real password change in the backend phase.");
+    setSaving(true);
+    try {
+      const credential = EmailAuthProvider.credential(auth.currentUser.email, currentPassword);
+      await reauthenticateWithCredential(auth.currentUser, credential);
+      await updatePassword(auth.currentUser, newPassword);
+      setCurrentPassword("");
+      setNewPassword("");
+      setMessage("Your password has been changed successfully.");
+    } catch (error) {
+      const code = (error as { code?: string })?.code || "";
+      setMessage(code === "auth/invalid-credential" ? "Your current password is incorrect." : "We couldn't change your password. Please try again.");
+    } finally {
+      setSaving(false);
+    }
   };
 
   return (
