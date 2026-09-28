@@ -501,6 +501,22 @@ export const api = {
         createdAt: enquiry.createdAt || new Date().toISOString().slice(0, 10),
       };
       await setDoc(doc(db, "enquiries", id), value);
+
+      // Fire the production confirmation/notification emails after Firestore
+      // has accepted the enquiry. Email failure must never erase a saved request.
+      try {
+        const emailResponse = await fetch("/api/send-enquiry", {
+          method: "POST",
+          headers: { "Content-Type": "application/json" },
+          body: JSON.stringify(value),
+        });
+        if (!emailResponse.ok) {
+          console.error("LUCOMI enquiry email request failed:", await emailResponse.text());
+        }
+      } catch (emailError) {
+        console.error("LUCOMI enquiry email request failed:", emailError);
+      }
+
       // Every customer enquiry creates an admin notification, including custom project requests.
       try {
         await createAdminNotification({
