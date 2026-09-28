@@ -7,6 +7,10 @@ import {
   GoogleAuthProvider,
   User as FirebaseUser,
   createUserWithEmailAndPassword,
+  EmailAuthProvider,
+  reauthenticateWithCredential,
+  sendEmailVerification,
+  updatePassword,
   onAuthStateChanged,
   signInWithEmailAndPassword,
   signInWithPopup,
@@ -395,6 +399,7 @@ function AuthModal({
         if (name.trim()) {
           await updateProfile(result.user, { displayName: name.trim() });
         }
+        await sendEmailVerification(result.user);
         firebaseUser = result.user;
       } else {
         const result = await signInWithEmailAndPassword(auth, email.trim(), password);
@@ -414,7 +419,7 @@ function AuthModal({
     <Modal
       open={open}
       onClose={onClose}
-      title={submitted ? "You're all set" : mode === "signup" ? "Create your LUCOMI account" : "Welcome back"}
+      title={submitted ? "You're all set" : mode === "signup" ? "Create account" : "Welcome back"}
     >
       {forgot ? (
         <div className="space-y-5">
@@ -448,8 +453,10 @@ function AuthModal({
         </div>
       ) : submitted ? (
         <div className="space-y-5">
-          <Notice title="Signed in successfully">
-            Your LUCOMI account is now active.
+          <Notice title={mode === "signup" ? "Account created" : "Signed in successfully"}>
+            {mode === "signup"
+              ? "Your account is ready. We sent a verification link to your email address. Please verify it before using your account fully."
+              : "Your LUCOMI account is now active."}
           </Notice>
           <Button full onClick={onClose}>Continue</Button>
         </div>
@@ -519,6 +526,12 @@ function AuthModal({
               {busy ? "Please wait..." : mode === "signup" ? "Create Account" : "Sign In"}
             </Button>
           </form>
+
+          {mode === "signup" && !submitted && (
+            <p className="text-center text-[11px] leading-relaxed text-mute">
+              We'll send a verification link to your email after you create your account.
+            </p>
+          )}
 
           <p className="text-center text-xs leading-relaxed text-mute">
             {mode === "signup" ? "Already have an account?" : "Don't have an account?"}{" "}
