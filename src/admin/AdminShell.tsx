@@ -28,7 +28,7 @@ import { useAuth } from "../components/AuthFlow";
 import { cn, formatDate } from "../lib/helpers";
 import { ThemeToggle } from "../components/Chrome";
 import { Logo, Mark } from "../components/Logo";
-import { Button, Field, Input, Micro, Notice, Skeleton } from "../components/ui";
+import { Button, Field, Input, Micro, Modal, Notice, Skeleton } from "../components/ui";
 
 export const ADMIN_NAV = [
   { to: "/admin", label: "Overview", icon: LayoutDashboard, end: true },
