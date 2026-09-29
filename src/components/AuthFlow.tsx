@@ -5,6 +5,7 @@ import { auth, db } from "../lib/firebase";
 import { doc, getDoc, serverTimestamp, setDoc, Timestamp } from "firebase/firestore";
 import {
   GoogleAuthProvider,
+  getAdditionalUserInfo,
   User as FirebaseUser,
   createUserWithEmailAndPassword,
   sendEmailVerification,
@@ -78,13 +79,14 @@ function friendlyAuthError(error: unknown) {
   const code = (error as { code?: string })?.code || "";
   const messages: Record<string, string> = {
     "auth/email-already-in-use": "An account already exists with this email. Try signing in instead.",
-    "auth/invalid-credential": "The email or password is incorrect.",
+    "auth/invalid-credential": "We couldn’t sign you in. If you don’t have a LUCOMI account yet, please create an account first.",
     "auth/invalid-email": "Please enter a valid email address.",
     "auth/weak-password": "Your password is too weak. Use at least 6 characters.",
     "auth/popup-closed-by-user": "Google sign-in was cancelled.",
     "auth/popup-blocked": "Your browser blocked the Google sign-in window. Please allow pop-ups and try again.",
     "auth/operation-not-allowed": "This sign-in method is not enabled in Firebase yet.",
     "auth/network-request-failed": "Network error. Check your connection and try again.",
+    "auth/user-not-found": "You don’t have a LUCOMI account yet. Please create an account first.",
   };
   return messages[code] || "Authentication could not be completed. Please try again.";
 }
@@ -435,6 +437,15 @@ function AuthModal({
 
       if (provider === "google") {
         const result = await signInWithPopup(auth, new GoogleAuthProvider());
+        const additionalUserInfo = getAdditionalUserInfo(result);
+
+        if (mode === "signin" && additionalUserInfo?.isNewUser) {
+          await firebaseSignOut(auth);
+          setError("You don't have a LUCOMI account yet. Please create an account first.");
+          setSubmitted(false);
+          return;
+        }
+
         firebaseUser = result.user;
       } else if (mode === "signup") {
         const result = await createUserWithEmailAndPassword(auth, email.trim(), password);
@@ -561,7 +572,22 @@ function AuthModal({
               </div>
             </Field>
 
-            {error && <Notice title="Sign-in issue">{error}</Notice>}
+            {error && (
+              <Notice tone="warn" title="Sign-in issue">
+                <div className="space-y-3">
+                  <p>{error}</p>
+                  {mode === "signin" && (
+                    <button
+                      type="button"
+                      onClick={() => switchMode("signup")}
+                      className="font-semibold text-royal hover:underline"
+                    >
+                      Create an account
+                    </button>
+                  )}
+                </div>
+              </Notice>
+            )}
 
             {mode === "signin" && (
               <button
