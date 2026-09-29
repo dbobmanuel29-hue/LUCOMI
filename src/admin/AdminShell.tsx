@@ -292,7 +292,7 @@ export function AdminLayout() {
   const [openMenu, setOpenMenu] = useState(false);
   const [access, setAccess] = useState<"checking" | "allowed" | "denied">("checking");
   const navigate = useNavigate();
-  const { user, authReady } = useAuth();
+  const { user, authReady, signOut } = useAuth();
 
   useEffect(() => {
     if (!openMenu) return;
@@ -392,7 +392,7 @@ export function AdminLayout() {
             <Link to="/" className="micro flex items-center gap-2 text-white/55 transition-colors hover:text-white">
               <ArrowLeft className="h-3.5 w-3.5" /> Back to website
             </Link>
-            <button onClick={() => { void auth.signOut(); navigate("/"); }} className="micro flex items-center gap-2 text-white/45 transition-colors hover:text-white">
+            <button onClick={() => { void signOut(); navigate("/"); }} className="micro flex items-center gap-2 text-white/45 transition-colors hover:text-white">
               <LogOut className="h-3.5 w-3.5" /> Sign out
             </button>
           </div>
