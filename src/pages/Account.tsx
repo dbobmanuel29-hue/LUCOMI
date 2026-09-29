@@ -6,8 +6,7 @@ import { doc, getDoc, Timestamp } from "firebase/firestore";
 import { EmailAuthProvider, reauthenticateWithCredential, updatePassword } from "firebase/auth";
 import { auth } from "../lib/firebase";
 import { db } from "../lib/firebase";
-import { uploadToCloudinary } from "../lib/api";
-import { api, useAsync } from "../lib/api";
+import { api, uploadToCloudinary, useAsync } from "../lib/api";
 import type { Enquiry } from "../lib/types";
 import { Button, Field, Input, Micro, Notice, Reveal, usePageMeta } from "../components/ui";
 
@@ -167,6 +166,8 @@ export default function Account() {
       setSaving(false);
     }
   };
+
+  const enquiryItems = [...(enquiries.data ?? [])].sort((a, b) => b.createdAt.localeCompare(a.createdAt));
 
   return (
     <>
