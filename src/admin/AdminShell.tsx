@@ -289,6 +289,49 @@ export function AdminNotifications() {
   );
 }
 
+class AdminPageErrorBoundary extends React.Component<
+  { children: React.ReactNode },
+  { hasError: boolean; message: string }
+> {
+  state = { hasError: false, message: "" };
+
+  static getDerivedStateFromError(error: unknown) {
+    return {
+      hasError: true,
+      message: error instanceof Error ? error.message : "An unexpected dashboard error occurred.",
+    };
+  }
+
+  componentDidCatch(error: unknown) {
+    console.error("LUCOMI admin page error:", error);
+  }
+
+  render() {
+    if (!this.state.hasError) return this.props.children;
+
+    return (
+      <section className="flex min-h-[60vh] items-center justify-center py-16">
+        <div className="w-full max-w-xl rounded-2xl border border-red-200 bg-white p-7 text-center plate-shadow">
+          <Micro className="text-red-600">Dashboard error</Micro>
+          <h1 className="display mt-3 text-3xl text-ink">This admin page could not load.</h1>
+          <p className="mt-3 text-sm leading-relaxed text-mute">
+            The dashboard hit an unexpected error while rendering this page.
+          </p>
+          <div className="mt-5 rounded-lg bg-red-50 p-3 text-left text-xs text-red-800 break-anywhere">
+            {this.state.message}
+          </div>
+          <div className="mt-5 flex justify-center gap-3">
+            <Button variant="outline" onClick={() => window.location.reload()}>Reload page</Button>
+            <Button onClick={() => { this.setState({ hasError: false, message: "" }); window.location.href = "/admin"; }}>
+              Back to overview
+            </Button>
+          </div>
+        </div>
+      </section>
+    );
+  }
+}
+
 export function AdminLayout() {
   const [openMenu, setOpenMenu] = useState(false);
   const [access, setAccess] = useState<"checking" | "allowed" | "denied">("checking");
@@ -421,7 +464,7 @@ export function AdminLayout() {
         </header>
 
         <main className="mx-auto w-full max-w-[1500px] flex-1 overflow-x-hidden px-4 py-6 sm:px-6 sm:py-8 lg:px-10 lg:py-10">
-          <Outlet />
+          <AdminPageErrorBoundary><Outlet /></AdminPageErrorBoundary>
         </main>
       </div>
 
