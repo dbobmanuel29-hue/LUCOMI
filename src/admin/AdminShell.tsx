@@ -443,7 +443,7 @@ export function AdminLayout() {
             <Link to="/" onClick={() => setOpenMenu(false)} className="micro inline-flex items-center gap-2 text-white/70 transition-colors hover:text-white">
               <ArrowLeft className="h-3.5 w-3.5" /> Back to website
             </Link>
-            <button onClick={() => { void auth.signOut(); navigate("/"); }} className="micro flex items-center gap-2 text-white/50 transition-colors hover:text-white">
+            <button onClick={() => { void signOut(); navigate("/"); }} className="micro flex items-center gap-2 text-white/50 transition-colors hover:text-white">
               <LogOut className="h-3.5 w-3.5" /> Sign out
             </button>
           </div>
