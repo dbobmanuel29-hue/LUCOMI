@@ -271,28 +271,19 @@ export function AdminProducts() {
         )}
       </Modal>
 
-      <Modal open={!!confirm} onClose={() => setConfirm(null)} title="Delete Product">
-        <p className="text-[15px] text-mute">
-          Delete <strong className="text-charcoal">{confirm?.name}</strong>? This record will be removed from the
-          catalogue. This cannot be undone.
-        </p>
-        <div className="mt-6 flex gap-3">
-          <Button
-            variant="ink"
-            onClick={async () => {
-              if (confirm) await api.products.remove(confirm.id);
-              setConfirm(null);
-              setNotice("Product deleted.");
-              reload();
-            }}
-          >
-            Delete
-          </Button>
-          <Button variant="outline" onClick={() => setConfirm(null)}>
-            Cancel
-          </Button>
-        </div>
-      </Modal>
+      <AdminConfirmDialog
+        open={!!confirm}
+        onClose={() => setConfirm(null)}
+        title="Delete product"
+        message={<>Are you sure you want to permanently delete <strong>{confirm?.name}</strong>? This product will be removed from the catalogue. This cannot be undone.</>}
+        confirmLabel="Delete product"
+        onConfirm={async () => {
+          if (confirm) await api.products.remove(confirm.id);
+          setConfirm(null);
+          setNotice("Product deleted.");
+          reload();
+        }}
+      />
     </>
   );
 }
