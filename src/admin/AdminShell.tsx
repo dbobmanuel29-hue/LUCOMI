@@ -453,6 +453,46 @@ export function AdminLayout() {
   );
 }
 
+export function AdminConfirmDialog({
+  open,
+  title = "Are you sure?",
+  message,
+  confirmLabel = "Delete",
+  onConfirm,
+  onClose,
+}: {
+  open: boolean;
+  title?: string;
+  message: React.ReactNode;
+  confirmLabel?: string;
+  onConfirm: () => void | Promise<void>;
+  onClose: () => void;
+}) {
+  return (
+    <Modal open={open} onClose={onClose} title={title}>
+      <div className="space-y-5">
+        <div className="flex items-start gap-4 rounded-xl border border-red-100 bg-red-50/70 p-4">
+          <div className="flex h-10 w-10 shrink-0 items-center justify-center rounded-full bg-red-100 text-red-600">
+            <Trash2 className="h-4 w-4" />
+          </div>
+          <div className="min-w-0 text-[14px] leading-relaxed text-charcoal">
+            {message}
+          </div>
+        </div>
+        <div className="flex flex-col-reverse gap-3 sm:flex-row sm:justify-end">
+          <Button variant="outline" onClick={onClose}>Cancel</Button>
+          <Button
+            variant="ink"
+            onClick={() => void onConfirm()}
+          >
+            {confirmLabel}
+          </Button>
+        </div>
+      </div>
+    </Modal>
+  );
+}
+
 /* ----------------------------- shared parts ---------------------------- */
 export function AdminPageHead({
   title,
