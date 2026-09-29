@@ -528,6 +528,32 @@ export const api = {
       return true;
     },
 
+    subscribeToUser: (
+      userId: string,
+      onChange: (items: Enquiry[]) => void,
+      onError?: (error: unknown) => void,
+    ) => {
+      if (!userId) {
+        onChange([]);
+        return () => {};
+      }
+
+      const enquiryQuery = query(collection(db, "enquiries"), where("userId", "==", userId));
+      return onSnapshot(
+        enquiryQuery,
+        (snapshot) => {
+          const items = snapshot.docs
+            .map((item) => enquiryFromDoc(item.id, item.data()))
+            .sort((a, b) => b.createdAt.localeCompare(a.createdAt));
+          onChange(items);
+        },
+        (error) => {
+          console.error("LUCOMI enquiry subscription failed:", error);
+          onError?.(error);
+        },
+      );
+    },
+
     remove: async (id: string) => {
       await deleteDoc(doc(db, "enquiries", id));
       try {
