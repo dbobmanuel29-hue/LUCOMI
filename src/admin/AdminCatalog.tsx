@@ -4,7 +4,7 @@ import { api, useAsync } from "../lib/api";
 import { cn, formatDate, priceLabel } from "../lib/helpers";
 import type { Category, Product } from "../lib/types";
 import { ImageUpload } from "../components/ImageUpload";
-import { AdminPageHead, Cell, RowShell } from "./AdminShell";
+import { AdminConfirmDialog, AdminPageHead, Cell, RowShell } from "./AdminShell";
 import { Button, Field, Input, Micro, Modal, Notice, Select, Textarea } from "../components/ui";
 
 const blank = (category: string): Product => ({
@@ -313,6 +313,7 @@ export function AdminCategories() {
   const products = useAsync(() => api.products.list());
   const [editing, setEditing] = useState<Category | null>(null);
   const [saving, setSaving] = useState(false);
+  const [confirmCategory, setConfirmCategory] = useState<Category | null>(null);
 
   const count = (slug: string) => (products.data ?? []).filter((p) => p.category === slug).length;
 
@@ -353,10 +354,7 @@ export function AdminCategories() {
                   <Pencil className="h-3.5 w-3.5" />
                 </button>
                 <button
-                  onClick={async () => {
-                    await api.categories.remove(c.id);
-                    reload();
-                  }}
+                  onClick={() => setConfirmCategory(c)}
                   aria-label={`Delete ${c.name}`}
                   className="rounded-full border border-line p-2 hover:border-ink"
                 >
@@ -367,6 +365,20 @@ export function AdminCategories() {
           </article>
         ))}
       </div>
+
+      <AdminConfirmDialog
+        open={!!confirmCategory}
+        onClose={() => setConfirmCategory(null)}
+        title="Delete category"
+        message={<>Are you sure you want to permanently delete <strong>{confirmCategory?.name}</strong>? This cannot be undone.</>}
+        confirmLabel="Delete category"
+        onConfirm={async () => {
+          if (!confirmCategory) return;
+          await api.categories.remove(confirmCategory.id);
+          setConfirmCategory(null);
+          reload();
+        }}
+      />
 
       <Modal open={!!editing} onClose={() => setEditing(null)} title={editing?.name ? "Edit Category" : "Add Category"}>
         {editing && (
