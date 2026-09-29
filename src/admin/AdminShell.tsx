@@ -602,7 +602,7 @@ export function Dashboard() {
 
       <div className="mt-6 grid gap-4 sm:grid-cols-2 lg:grid-cols-5">
         {loading ? (
-          Array.from({ length: 5 }).map((_, i) => <Skeleton key={i} className="h-32 rounded-xl" />)
+          Array.from({ length: 6 }).map((_, i) => <Skeleton key={i} className="h-32 rounded-xl" />)
         ) : (
           <>
             <Stat label="Total Products" value={all.length} hint="All catalogue entries" />
@@ -611,30 +611,32 @@ export function Dashboard() {
             <Stat label="Total Enquiries" value={allEnq.length} hint="All sources" />
             <Stat label="New Enquiries" value={allEnq.filter((e) => e.status === "New").length} hint="Awaiting contact" />
             <Stat label="Pending Reviews" value={pendingReviews.length} hint="Awaiting approval" />
-            {pendingReviews.length > 0 && (
+          </>
+        )}
+      </div>
+
+      {pendingReviews.length > 0 && !loading && (
         <section className="mt-10 rounded-xl border border-royal/20 bg-white p-6 plate-shadow sm:p-7">
           <div className="flex flex-col gap-4 sm:flex-row sm:items-center sm:justify-between">
             <div>
               <Micro className="text-royal">Action required</Micro>
-              <h2 className="display mt-2 text-3xl">{pendingReviews.length} review{pendingReviews.length === 1 ? "" : "s"} awaiting approval</h2>
-              <p className="mt-2 text-[14px] text-mute">Review customer feedback before it appears publicly on the website.</p>
+              <h2 className="display mt-2 text-3xl">
+                {pendingReviews.length} review{pendingReviews.length === 1 ? "" : "s"} awaiting approval
+              </h2>
+              <p className="mt-2 text-[14px] text-mute">
+                Review customer feedback before it appears publicly on the website.
+              </p>
             </div>
             <Button href="/admin/testimonials">Review feedback</Button>
           </div>
         </section>
       )}
 
-    </>
-        )}
-      </div>
-
       <div className="mt-10 grid gap-8 lg:grid-cols-2">
         <section>
           <div className="mb-4 flex items-center justify-between">
             <h2 className="display text-3xl">Recent Products</h2>
-            <Link to="/admin/products" className="micro text-royal hover:text-ink">
-              View all
-            </Link>
+            <Link to="/admin/products" className="micro text-royal hover:text-ink">View all</Link>
           </div>
           <div className="space-y-3">
             {loading && Array.from({ length: 3 }).map((_, i) => <Skeleton key={i} className="h-16 rounded-xl" />)}
@@ -643,12 +645,8 @@ export function Dashboard() {
               .slice(0, 5)
               .map((p) => (
                 <RowShell key={p.id}>
-                  <Cell label="Product" span={5}>
-                    <span className="font-semibold">{p.name}</span>
-                  </Cell>
-                  <Cell label="Category" span={4}>
-                    {p.category.replace(/-/g, " ")}
-                  </Cell>
+                  <Cell label="Product" span={5}><span className="font-semibold">{p.name}</span></Cell>
+                  <Cell label="Category" span={4}>{p.category.replace(/-/g, " ")}</Cell>
                   <Cell label="Status" span={3}>
                     <span className={cn("micro", p.published ? "text-royal" : "text-mute")}>
                       {p.published ? "Published" : "Draft"}
@@ -662,9 +660,7 @@ export function Dashboard() {
         <section>
           <div className="mb-4 flex items-center justify-between">
             <h2 className="display text-3xl">Recent Enquiries</h2>
-            <Link to="/admin/enquiries" className="micro text-royal hover:text-ink">
-              View all
-            </Link>
+            <Link to="/admin/enquiries" className="micro text-royal hover:text-ink">View all</Link>
           </div>
           <div className="space-y-3">
             {loading && Array.from({ length: 3 }).map((_, i) => <Skeleton key={i} className="h-16 rounded-xl" />)}
@@ -674,9 +670,7 @@ export function Dashboard() {
                   <span className="font-semibold">{e.fullName}</span>
                   <span className="block text-[12.5px] text-mute">{e.source}</span>
                 </Cell>
-                <Cell label="Requirement" span={4}>
-                  {e.furnitureType}
-                </Cell>
+                <Cell label="Requirement" span={4}>{e.furnitureType}</Cell>
                 <Cell label="Date" span={3}>
                   <span className="tnum text-[13px]">{formatDate(e.createdAt)}</span>
                   <span className="micro block text-royal">{e.status}</span>
