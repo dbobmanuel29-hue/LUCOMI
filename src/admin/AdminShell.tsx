@@ -17,6 +17,7 @@ import {
   RefreshCw,
   Bell,
   Check,
+  Trash2,
 } from "lucide-react";
 import { api, useAsync } from "../lib/api";
 import type { AdminNotification } from "../lib/types";
