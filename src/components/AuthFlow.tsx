@@ -282,6 +282,7 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
   };
 
   const signOut = async () => {
+    setOpen(false);
     await firebaseSignOut(auth);
     try {
       sessionStorage.removeItem("lucomi-admin-ui-uid");
