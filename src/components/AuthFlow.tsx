@@ -395,16 +395,11 @@ function AuthModal({
     }
   };
 
-  const resendVerification = async () => {
+  const checkVerificationStatus = async () => {
     const firebaseUser = auth.currentUser;
 
     if (!firebaseUser || !firebaseUser.email) {
-      setError("Please sign in again before requesting a new verification email.");
-      return;
-    }
-
-    if (firebaseUser.emailVerified) {
-      setResetMessage("Your email address is already verified.");
+      setError("Please sign in again before checking your verification status.");
       return;
     }
 
@@ -413,16 +408,50 @@ function AuthModal({
     setResetMessage("");
 
     try {
+      await reload(firebaseUser);
+
+      if (auth.currentUser?.emailVerified) {
+        setResetMessage("Your email address is verified. You can continue.");
+      } else {
+        setResetMessage("Your email address is not verified yet. Please open the verification email first, then check again.");
+      }
+    } catch {
+      setError("We could not check your verification status right now. Please try again.");
+    } finally {
+      setBusy(false);
+    }
+  };
+
+  const resendVerification = async () => {
+    const firebaseUser = auth.currentUser;
+
+    if (!firebaseUser || !firebaseUser.email) {
+      setError("Please sign in again before requesting a new verification email.");
+      return;
+    }
+
+    setBusy(true);
+    setError("");
+    setResetMessage("");
+
+    try {
+      await reload(firebaseUser);
+
+      if (firebaseUser.emailVerified) {
+        setResetMessage("Your email address is already verified. No new verification email is needed.");
+        return;
+      }
+
       await sendEmailVerification(firebaseUser);
       setResetMessage(
-        "A new verification link has been sent. Please check your Inbox and also your Spam or Junk folder."
+        "We requested a new verification email. Please check your Inbox and also your Spam or Junk folder. If it still does not arrive, use Check verification status after opening any verification email you receive."
       );
     } catch (verificationError) {
       const code = (verificationError as { code?: string })?.code || "";
       setError(
         code === "auth/too-many-requests"
           ? "Too many verification emails were requested. Please wait a little while and try again."
-          : "We could not resend the verification email right now. Please try again later."
+          : "We could not send the verification email right now. Please try again later."
       );
     } finally {
       setBusy(false);
@@ -515,14 +544,19 @@ function AuthModal({
 
           {mode === "signup" ? (
             <div className="space-y-3">
-              {resetMessage && <Notice title="Verification email sent">{resetMessage}</Notice>}
-              {error && <Notice tone="warn" title="Verification email not sent">{error}</Notice>}
+              {resetMessage && <Notice title="Email verification">{resetMessage}</Notice>}
+              {error && <Notice tone="warn" title="Verification issue">{error}</Notice>}
               <p className="rounded-lg bg-plate p-3 text-xs leading-relaxed text-mute">
-                Check your <strong>Inbox</strong> for the verification email. If you don't see it there, please also check your <strong>Spam or Junk</strong> folder.
+                We sent a verification email when you created your account. Check your <strong>Inbox</strong>, and also your <strong>Spam or Junk</strong> folder.
               </p>
-              <Button full disabled={busy || !!resetMessage} onClick={() => void resendVerification()}>
-                {busy ? "Sending..." : "Resend verification link"}
-              </Button>
+              <div className="grid gap-3 sm:grid-cols-2">
+                <Button full disabled={busy} onClick={() => void resendVerification()}>
+                  {busy ? "Please wait..." : "Resend verification link"}
+                </Button>
+                <Button full variant="outline" disabled={busy} onClick={() => void checkVerificationStatus()}>
+                  Check verification status
+                </Button>
+              </div>
             </div>
           ) : null}
 
