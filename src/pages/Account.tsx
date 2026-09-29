@@ -6,7 +6,7 @@ import { doc, getDoc, Timestamp } from "firebase/firestore";
 import { EmailAuthProvider, reauthenticateWithCredential, updatePassword } from "firebase/auth";
 import { auth } from "../lib/firebase";
 import { db } from "../lib/firebase";
-import { api, uploadToCloudinary, useAsync } from "../lib/api";
+import { api, uploadToCloudinary } from "../lib/api";
 import type { Enquiry } from "../lib/types";
 import { Button, Field, Input, Micro, Notice, Reveal, usePageMeta } from "../components/ui";
 
@@ -25,7 +25,35 @@ export default function Account() {
   const [saving, setSaving] = useState(false);
   const [imageError, setImageError] = useState("");
   const fileInputRef = useRef<HTMLInputElement>(null);
-  const enquiries = useAsync<Enquiry[]>(() => api.enquiries.list(), [user?.uid]);
+  const [enquiryItems, setEnquiryItems] = useState<Enquiry[]>([]);
+  const [enquiriesLoading, setEnquiriesLoading] = useState(true);
+  const [enquiriesError, setEnquiriesError] = useState(false);
+
+  useEffect(() => {
+    if (!user?.uid) {
+      setEnquiryItems([]);
+      setEnquiriesLoading(false);
+      setEnquiriesError(false);
+      return;
+    }
+
+    setEnquiriesLoading(true);
+    setEnquiriesError(false);
+
+    const unsubscribe = api.enquiries.subscribeToUser(
+      user.uid,
+      (items) => {
+        setEnquiryItems(items);
+        setEnquiriesLoading(false);
+      },
+      () => {
+        setEnquiriesError(true);
+        setEnquiriesLoading(false);
+      },
+    );
+
+    return unsubscribe;
+  }, [user?.uid]);
 
   useEffect(() => {
     if (!user) return;
@@ -167,7 +195,6 @@ export default function Account() {
     }
   };
 
-  const enquiryItems = [...(enquiries.data ?? [])].sort((a, b) => b.createdAt.localeCompare(a.createdAt));
 
   return (
     <>
@@ -290,7 +317,7 @@ export default function Account() {
                     </div>
                   )}
 
-                  {!enquiries.loading && !enquiries.error && enquiryItems.length === 0 && (
+                  {!enquiriesLoading && !enquiriesError && enquiryItems.length === 0 && (
                     <div className="rounded-xl border border-dashed border-line bg-plate/40 p-6 text-center">
                       <ClipboardList className="mx-auto h-8 w-8 text-mute" />
                       <h3 className="mt-3 font-semibold text-ink">No enquiries yet</h3>
@@ -301,7 +328,7 @@ export default function Account() {
                     </div>
                   )}
 
-                  {!enquiries.loading && !enquiries.error && enquiryItems.length > 0 && (
+                  {!enquiriesLoading && !enquiriesError && enquiryItems.length > 0 && (
                     <div className="space-y-4">
                       {enquiryItems.map((enquiry) => (
                         <article key={enquiry.id} className="rounded-xl border border-line bg-plate/40 p-4 sm:p-5">
