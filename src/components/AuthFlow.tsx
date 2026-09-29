@@ -9,6 +9,7 @@ import {
   User as FirebaseUser,
   createUserWithEmailAndPassword,
   sendEmailVerification,
+  reload,
   onAuthStateChanged,
   signInWithEmailAndPassword,
   signInWithPopup,
