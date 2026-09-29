@@ -27,7 +27,7 @@ export default async function handler(request: ApiRequest, response: ApiResponse
     const app = getAdminApp();
     const adminAuth = getAuth(app);
     const adminDb = getFirestore(app);
-    const decoded = await adminAuth.verifyIdToken(header.slice("Bearer ".length).trim(), true);
+    const decoded = await adminAuth.verifyIdToken(header.slice("Bearer ".length).trim());
     const adminProfile = await adminDb.collection("admins").doc(decoded.uid).get();
 
     if (!adminProfile.exists || adminProfile.data()?.role !== "admin") {
