@@ -6,7 +6,7 @@ import { cn, displayPhone, formatDate, telHref, waLink } from "../lib/helpers";
 import type { Enquiry, EnquiryStatus, Project, TeamMember, Testimonial } from "../lib/types";
 import { businessSettings } from "../lib/mock";
 import { ImageUpload } from "../components/ImageUpload";
-import { AdminPageHead, Cell, RowShell } from "./AdminShell";
+import { AdminConfirmDialog, AdminPageHead, Cell, RowShell } from "./AdminShell";
 import { Button, Field, Input, Micro, Modal, Notice, Select, Textarea } from "../components/ui";
 
 const STATUSES: EnquiryStatus[] = ["New", "Contacted", "In Progress", "Completed", "Archived"];
@@ -482,6 +482,7 @@ export function AdminEnquiries() {
   const { data, loading, reload } = useAsync(() => api.enquiries.list());
   const [filter, setFilter] = useState<"All" | EnquiryStatus>("All");
   const [active, setActive] = useState<Enquiry | null>(null);
+  const [confirmDelete, setConfirmDelete] = useState<Enquiry | null>(null);
 
   const list = (data ?? []).filter((e) => filter === "All" || e.status === filter);
 
@@ -576,8 +577,7 @@ export function AdminEnquiries() {
                 <button
                   type="button"
                   onClick={async () => {
-                    if (!window.confirm(`Delete the enquiry from ${e.fullName} permanently? This will also remove its admin notification.`)) return;
-                    await api.enquiries.remove(e.id);
+                    setConfirmDelete(e);
                     if (active?.id === e.id) setActive(null);
                     reload();
                   }}
@@ -592,6 +592,21 @@ export function AdminEnquiries() {
           </RowShell>
         ))}
       </div>
+
+      <AdminConfirmDialog
+        open={!!confirmDelete}
+        onClose={() => setConfirmDelete(null)}
+        title="Delete enquiry"
+        message={<>Are you sure you want to permanently delete the enquiry from <strong>{confirmDelete?.fullName}</strong>? This will also remove its admin notification. This cannot be undone.</>}
+        confirmLabel="Delete enquiry"
+        onConfirm={async () => {
+          if (!confirmDelete) return;
+          await api.enquiries.remove(confirmDelete.id);
+          if (active?.id === confirmDelete.id) setActive(null);
+          setConfirmDelete(null);
+          reload();
+        }}
+      />
 
       <Modal open={!!active} onClose={() => setActive(null)} title="Enquiry Details" wide>
         {active && (
@@ -660,11 +675,7 @@ export function AdminEnquiries() {
               )}
               <Button
                 variant="ghost"
-                onClick={async () => {
-                  await api.enquiries.remove(active.id);
-                  setActive(null);
-                  reload();
-                }}
+                onClick={() => setConfirmDelete(active)}
               >
                 Delete
               </Button>
