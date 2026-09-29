@@ -52,23 +52,42 @@ export function AdminUsers() {
     setLoading(true);
     setError("");
     try {
+      const currentAdmin = auth.currentUser;
+      if (!currentAdmin) throw new Error("Your admin session has expired. Please sign in again.");
+
+      const idToken = await currentAdmin.getIdToken();
+      const authResponse = await fetch("/api/admin/list-users", {
+        headers: { Authorization: `Bearer ${idToken}` },
+      });
+      const authResult = await authResponse.json().catch(() => ({}));
+      if (!authResponse.ok) throw new Error(authResult.error || "Users could not be loaded.");
+
       const [userSnap, adminSnap] = await Promise.all([
         getDocs(collection(db, "users")),
         getDocs(collection(db, "admins")),
       ]);
+      const profiles = new Map(userSnap.docs.map((item) => [item.id, item.data()]));
       const adminUids = new Set(adminSnap.docs.map((item) => item.id));
-      const rows = userSnap.docs.map((item) => {
-        const d = item.data();
+      const rows = (authResult.users ?? []).map((account: {
+        uid: string;
+        name?: string;
+        email?: string;
+        phone?: string;
+        provider?: string;
+        createdAt?: string;
+        lastLoginAt?: string;
+      }) => {
+        const d = profiles.get(account.uid) ?? {};
         return {
-          uid: item.id,
-          name: d.name || "Unnamed user",
-          email: d.email || "—",
-          phone: d.phone || "",
-          provider: d.provider || "email",
-          createdAt: asTimestamp(d.createdAt),
-          lastLoginAt: asTimestamp(d.lastLoginAt),
+          uid: account.uid,
+          name: d.name || account.name || "Unnamed user",
+          email: d.email || account.email || "—",
+          phone: d.phone || account.phone || "",
+          provider: d.provider || account.provider || "email",
+          createdAt: asTimestamp(d.createdAt) ?? (account.createdAt ? Timestamp.fromDate(new Date(account.createdAt)) : undefined),
+          lastLoginAt: asTimestamp(d.lastLoginAt) ?? (account.lastLoginAt ? Timestamp.fromDate(new Date(account.lastLoginAt)) : undefined),
           lastSeenAt: asTimestamp(d.lastSeenAt),
-          isAdmin: adminUids.has(item.id),
+          isAdmin: adminUids.has(account.uid),
         };
       });
       rows.sort((a, b) => (b.lastLoginAt?.toMillis() ?? b.createdAt?.toMillis() ?? 0) - (a.lastLoginAt?.toMillis() ?? a.createdAt?.toMillis() ?? 0));
