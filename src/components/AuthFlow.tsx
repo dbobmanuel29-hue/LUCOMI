@@ -8,7 +8,6 @@ import {
   getAdditionalUserInfo,
   User as FirebaseUser,
   createUserWithEmailAndPassword,
-  sendEmailVerification,
   reload,
   onAuthStateChanged,
   signInWithEmailAndPassword,
@@ -423,42 +422,6 @@ function AuthModal({
     }
   };
 
-  const resendVerification = async () => {
-    const firebaseUser = auth.currentUser;
-
-    if (!firebaseUser || !firebaseUser.email) {
-      setError("Please sign in again before requesting a new verification email.");
-      return;
-    }
-
-    setBusy(true);
-    setError("");
-    setResetMessage("");
-
-    try {
-      await reload(firebaseUser);
-
-      if (firebaseUser.emailVerified) {
-        setResetMessage("Your email address is already verified. No new verification email is needed.");
-        return;
-      }
-
-      await sendEmailVerification(firebaseUser);
-      setResetMessage(
-        "We requested a new verification email. Please check your Inbox and also your Spam or Junk folder. If it still does not arrive, use Check verification status after opening any verification email you receive."
-      );
-    } catch (verificationError) {
-      const code = (verificationError as { code?: string })?.code || "";
-      setError(
-        code === "auth/too-many-requests"
-          ? "Too many verification emails were requested. Please wait a little while and try again."
-          : "We could not send the verification email right now. Please try again later."
-      );
-    } finally {
-      setBusy(false);
-    }
-  };
-
   const authenticate = async (provider: "email" | "google") => {
     setBusy(true);
     setError("");
@@ -550,10 +513,7 @@ function AuthModal({
               <p className="rounded-lg bg-plate p-3 text-xs leading-relaxed text-mute">
                 We sent a verification email when you created your account. Check your <strong>Inbox</strong>, and also your <strong>Spam or Junk</strong> folder.
               </p>
-              <div className="grid gap-3 sm:grid-cols-2">
-                <Button full disabled={busy} onClick={() => void resendVerification()}>
-                  {busy ? "Please wait..." : "Resend verification link"}
-                </Button>
+              <div className="grid gap-3">
                 <Button full variant="outline" disabled={busy} onClick={() => void checkVerificationStatus()}>
                   Check verification status
                 </Button>
