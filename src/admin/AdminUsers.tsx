@@ -144,7 +144,7 @@ export function AdminUsers() {
       setError("Admin accounts cannot be deleted from the customer user manager.");
       return;
     }
-    if (!window.confirm(`Permanently delete ${user.name}'s Firebase Authentication account, profile and stored customer history? This cannot be undone.`)) return;
+    if (!window.confirm(`Are you sure you want to permanently delete this user? This will remove their account, profile and stored customer history. This cannot be undone.`)) return;
 
     try {
       const currentUser = auth.currentUser;
@@ -168,7 +168,7 @@ export function AdminUsers() {
         throw new Error(result.error || "The customer account could not be deleted.");
       }
 
-      setNotice(`Deleted ${user.name}'s Firebase Authentication account and ${result.deletedRecords ?? "associated"} stored records.`);
+      setNotice(`Deleted ${user.name}'s account and ${result.deletedRecords ?? "associated"} stored records.`);
       await loadUsers();
     } catch (error) {
       setError(error instanceof Error ? error.message : "The customer account could not be deleted.");
@@ -292,7 +292,7 @@ export function AdminUsers() {
       </div>      <Modal open={openCreate} onClose={() => setOpenCreate(false)} title="Add customer account">
         <div className="space-y-4">
           <Notice tone="info" title="Email/password account">
-            This creates a real Firebase Authentication account and a matching LUCOMI customer profile. Give the customer their temporary password securely.
+            This creates a customer account and matching LUCOMI profile. Give the customer their temporary password securely.
           </Notice>
           <Field label="Full Name" required>
             <Input value={form.name} onChange={(e) => setForm({ ...form, name: e.target.value })} />
