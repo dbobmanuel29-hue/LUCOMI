@@ -321,6 +321,17 @@ function AuthModal({
   const [resetMessage, setResetMessage] = useState("");
   const [resetError, setResetError] = useState("");
 
+  useEffect(() => {
+    if (!open) {
+      setSubmitted(false);
+      setBusy(false);
+      setError("");
+      setForgot(false);
+      setResetMessage("");
+      setResetError("");
+    }
+  }, [open]);
+
   const switchMode = (next: AuthMode) => {
     setMode(next);
     setSubmitted(false);
