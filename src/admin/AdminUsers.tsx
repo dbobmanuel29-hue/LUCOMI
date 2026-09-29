@@ -56,17 +56,17 @@ export function AdminUsers() {
       const currentAdmin = auth.currentUser;
       if (!currentAdmin) throw new Error("Your admin session has expired. Please sign in again.");
 
-      const idToken = await currentAdmin.getIdToken();
+      const [idToken, userSnap, adminSnap] = await Promise.all([
+        currentAdmin.getIdToken(),
+        getDocs(collection(db, "users")),
+        getDocs(collection(db, "admins")),
+      ]);
+
       const authResponse = await fetch("/api/admin/list-users", {
         headers: { Authorization: `Bearer ${idToken}` },
       });
       const authResult = await authResponse.json().catch(() => ({}));
       if (!authResponse.ok) throw new Error(authResult.error || "Users could not be loaded.");
-
-      const [userSnap, adminSnap] = await Promise.all([
-        getDocs(collection(db, "users")),
-        getDocs(collection(db, "admins")),
-      ]);
       const profiles = new Map(userSnap.docs.map((item) => [item.id, item.data()]));
       const adminUids = new Set(adminSnap.docs.map((item) => item.id));
       const rows = (authResult.users ?? []).map((account: {
