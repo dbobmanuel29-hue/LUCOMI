@@ -1,4 +1,4 @@
-import { useEffect, useState } from "react";
+import { Component, type ReactNode, useEffect, useState } from "react";
 import { Link, NavLink, Outlet, useNavigate } from "react-router-dom";
 import { motion } from "framer-motion";
 import {
@@ -289,8 +289,8 @@ export function AdminNotifications() {
   );
 }
 
-class AdminPageErrorBoundary extends React.Component<
-  { children: React.ReactNode },
+class AdminPageErrorBoundary extends Component<
+  { children: ReactNode },
   { hasError: boolean; message: string }
 > {
   state = { hasError: false, message: "" };
@@ -507,7 +507,7 @@ export function AdminConfirmDialog({
 }: {
   open: boolean;
   title?: string;
-  message: React.ReactNode;
+  message: ReactNode;
   confirmLabel?: string;
   onConfirm: () => void | Promise<void>;
   onClose: () => void;
@@ -545,7 +545,7 @@ export function AdminPageHead({
 }: {
   title: string;
   description: string;
-  action?: React.ReactNode;
+  action?: ReactNode;
 }) {
   const refresh = () => window.location.reload();
 
@@ -575,7 +575,7 @@ export function Stat({ label, value, hint }: { label: string; value: string | nu
   );
 }
 
-export function RowShell({ children, className }: { children: React.ReactNode; className?: string }) {
+export function RowShell({ children, className }: { children: ReactNode; className?: string }) {
   return (
     <div className={cn("grid gap-3 rounded-xl border border-line/70 bg-white p-4 sm:p-5 md:grid-cols-12 md:items-center", className)}>
       {children}
@@ -590,7 +590,7 @@ export function Cell({
   className,
 }: {
   label: string;
-  children: React.ReactNode;
+  children: ReactNode;
   span?: number;
   className?: string;
 }) {
@@ -615,7 +615,7 @@ export function useToggle(label: string) {
   return { notice, setNotice, label };
 }
 
-export function SavingNotice({ children }: { children: React.ReactNode }) {
+export function SavingNotice({ children }: { children: ReactNode }) {
   return (
     <div className="mb-6">
       <Notice title="Saved">{children}</Notice>
