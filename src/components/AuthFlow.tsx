@@ -392,6 +392,40 @@ function AuthModal({
     }
   };
 
+  const resendVerification = async () => {
+    const firebaseUser = auth.currentUser;
+
+    if (!firebaseUser || !firebaseUser.email) {
+      setError("Please sign in again before requesting a new verification email.");
+      return;
+    }
+
+    if (firebaseUser.emailVerified) {
+      setResetMessage("Your email address is already verified.");
+      return;
+    }
+
+    setBusy(true);
+    setError("");
+    setResetMessage("");
+
+    try {
+      await sendEmailVerification(firebaseUser);
+      setResetMessage(
+        "A new verification link has been sent. Please check your Inbox and also your Spam or Junk folder."
+      );
+    } catch (verificationError) {
+      const code = (verificationError as { code?: string })?.code || "";
+      setError(
+        code === "auth/too-many-requests"
+          ? "Too many verification emails were requested. Please wait a little while and try again."
+          : "We could not resend the verification email right now. Please try again later."
+      );
+    } finally {
+      setBusy(false);
+    }
+  };
+
   const authenticate = async (provider: "email" | "google") => {
     setBusy(true);
     setError("");
@@ -466,6 +500,20 @@ function AuthModal({
               ? "Your account is ready. We sent a verification link to your email address. Please verify it before using your account fully."
               : "Your LUCOMI account is now active."}
           </Notice>
+
+          {mode === "signup" ? (
+            <div className="space-y-3">
+              {resetMessage && <Notice title="Verification email sent">{resetMessage}</Notice>}
+              {error && <Notice tone="warn" title="Verification email not sent">{error}</Notice>}
+              <p className="rounded-lg bg-plate p-3 text-xs leading-relaxed text-mute">
+                Check your <strong>Inbox</strong> for the verification email. If you don't see it there, please also check your <strong>Spam or Junk</strong> folder.
+              </p>
+              <Button full disabled={busy || !!resetMessage} onClick={() => void resendVerification()}>
+                {busy ? "Sending..." : "Resend verification link"}
+              </Button>
+            </div>
+          ) : null}
+
           <Button full onClick={onClose}>Continue</Button>
         </div>
       ) : (
