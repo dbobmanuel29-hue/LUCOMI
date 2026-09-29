@@ -3,7 +3,7 @@ import { collection, doc, getDocs, serverTimestamp, setDoc, Timestamp } from "fi
 import { createUserWithEmailAndPassword, getAuth, signOut as secondarySignOut } from "firebase/auth";
 import { getApps, initializeApp } from "firebase/app";
 import { Clock3, Mail, Search, ShieldCheck, Trash2, UserPlus, UsersRound, Wifi } from "lucide-react";
-import { AdminPageHead } from "./AdminShell";
+import { AdminConfirmDialog, AdminPageHead } from "./AdminShell";
 import { Button, Field, Input, Micro, Modal, Notice, Select } from "../components/ui";
 import { auth, db } from "../lib/firebase";
 import { firebaseConfig } from "../lib/firebase";
@@ -46,6 +46,7 @@ export function AdminUsers() {
   const [openCreate, setOpenCreate] = useState(false);
   const [saving, setSaving] = useState(false);
   const [notice, setNotice] = useState("");
+  const [confirmDelete, setConfirmDelete] = useState<ManagedUser | null>(null);
   const [form, setForm] = useState({ name: "", email: "", phone: "", password: "" });
 
   const loadUsers = async () => {
@@ -163,8 +164,6 @@ export function AdminUsers() {
       setError("Admin accounts cannot be deleted from the customer user manager.");
       return;
     }
-    if (!window.confirm(`Are you sure you want to permanently delete this user? This will remove their account, profile and stored customer history. This cannot be undone.`)) return;
-
     try {
       const currentUser = auth.currentUser;
       if (!currentUser) {
@@ -188,6 +187,7 @@ export function AdminUsers() {
       }
 
       setNotice(`Deleted ${user.name}'s account and ${result.deletedRecords ?? "associated"} stored records.`);
+      setConfirmDelete(null);
       await loadUsers();
     } catch (error) {
       setError(error instanceof Error ? error.message : "The customer account could not be deleted.");
@@ -294,7 +294,7 @@ export function AdminUsers() {
                   <div className="flex items-center justify-start gap-2 md:justify-end">
                     <span className="micro rounded-full border border-line px-2.5 py-1 text-mute">{user.provider}</span>
                     {!user.isAdmin && (
-                      <button onClick={() => void deleteProfile(user)} className="rounded-full border border-line p-2 text-mute transition-colors hover:border-red-200 hover:text-red-600" aria-label={`Delete ${user.name}`}>
+                      <button onClick={() => setConfirmDelete(user)} className="rounded-full border border-line p-2 text-mute transition-colors hover:border-red-200 hover:text-red-600" aria-label={`Delete ${user.name}`}>
                         <Trash2 className="h-4 w-4" />
                       </button>
                     )}
@@ -305,6 +305,17 @@ export function AdminUsers() {
           </div>
         )}
       </section>
+
+      <AdminConfirmDialog
+        open={!!confirmDelete}
+        onClose={() => setConfirmDelete(null)}
+        title="Delete user"
+        message={<>Are you sure you want to permanently delete <strong>{confirmDelete?.name}</strong>? This will remove their account, profile and stored customer history. This cannot be undone.</>}
+        confirmLabel="Delete user"
+        onConfirm={async () => {
+          if (confirmDelete) await deleteProfile(confirmDelete);
+        }}
+      />
 
       <div className="mt-5 rounded-xl border border-line/70 bg-plate p-4 text-xs leading-relaxed text-mute">
         <strong className="text-ink">Account management:</strong> Customer profiles, activity and account access are managed from this dashboard.
