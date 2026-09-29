@@ -27,6 +27,7 @@ export function AdminProjects() {
   const { data, loading, reload } = useAsync(() => api.projects.list());
   const [editing, setEditing] = useState<Project | null>(null);
   const [saving, setSaving] = useState(false);
+  const [confirmDelete, setConfirmDelete] = useState<Project | null>(null);
 
   const blank: Project = {
     id: `pr${Date.now()}`,
@@ -89,10 +90,7 @@ export function AdminProjects() {
                   <Pencil className="h-3.5 w-3.5" />
                 </button>
                 <button
-                  onClick={async () => {
-                    await api.projects.remove(p.id);
-                    reload();
-                  }}
+                  onClick={() => setConfirmDelete(p)}
                   aria-label={`Delete ${p.name}`}
                   className="rounded-full border border-line p-2 hover:border-ink"
                 >
@@ -103,6 +101,20 @@ export function AdminProjects() {
           </RowShell>
         ))}
       </div>
+
+      <AdminConfirmDialog
+        open={!!confirmDelete}
+        onClose={() => setConfirmDelete(null)}
+        title="Delete project"
+        message={<>Are you sure you want to permanently delete <strong>{confirmDelete?.name}</strong>? This cannot be undone.</>}
+        confirmLabel="Delete project"
+        onConfirm={async () => {
+          if (!confirmDelete) return;
+          await api.projects.remove(confirmDelete.id);
+          setConfirmDelete(null);
+          reload();
+        }}
+      />
 
       <Modal open={!!editing} onClose={() => setEditing(null)} title={editing?.name ? "Edit Project" : "Add Project"} wide>
         {editing && (
@@ -176,6 +188,7 @@ export function AdminTestimonials() {
   const { data, loading, reload } = useAsync(() => api.testimonials.list());
   const [editing, setEditing] = useState<Testimonial | null>(null);
   const [saving, setSaving] = useState(false);
+  const [confirmDelete, setConfirmDelete] = useState<Testimonial | null>(null);
 
   const blank: Testimonial = {
     id: `t${Date.now()}`,
@@ -250,10 +263,7 @@ export function AdminTestimonials() {
                   <Pencil className="h-3.5 w-3.5" />
                 </button>
                 <button
-                  onClick={async () => {
-                    await api.testimonials.remove(t.id);
-                    reload();
-                  }}
+                  onClick={() => setConfirmDelete(t)}
                   aria-label="Delete testimonial"
                   className="rounded-full border border-line p-2 hover:border-ink"
                 >
@@ -264,6 +274,20 @@ export function AdminTestimonials() {
           </article>
         ))}
       </div>
+
+      <AdminConfirmDialog
+        open={!!confirmDelete}
+        onClose={() => setConfirmDelete(null)}
+        title="Delete review"
+        message={<>Are you sure you want to permanently delete this customer review? This cannot be undone.</>}
+        confirmLabel="Delete review"
+        onConfirm={async () => {
+          if (!confirmDelete) return;
+          await api.testimonials.remove(confirmDelete.id);
+          setConfirmDelete(null);
+          reload();
+        }}
+      />
 
       <Modal open={!!editing} onClose={() => setEditing(null)} title={editing?.customerName ? "Edit Testimonial" : "Add Testimonial"}>
         {editing && (
@@ -347,6 +371,7 @@ export function AdminTeam() {
   const { data, loading, reload } = useAsync(() => api.team.list());
   const [editing, setEditing] = useState<TeamMember | null>(null);
   const [saving, setSaving] = useState(false);
+  const [confirmDelete, setConfirmDelete] = useState<TeamMember | null>(null);
 
   const blank: TeamMember = {
     id: `tm${Date.now()}`,
@@ -400,10 +425,7 @@ export function AdminTeam() {
                   <Pencil className="h-3.5 w-3.5" />
                 </button>
                 <button
-                  onClick={async () => {
-                    await api.team.remove(m.id);
-                    reload();
-                  }}
+                  onClick={() => setConfirmDelete(m)}
                   aria-label={`Delete ${m.name}`}
                   className="rounded-full border border-line p-2 hover:border-ink"
                 >
@@ -414,6 +436,20 @@ export function AdminTeam() {
           </article>
         ))}
       </div>
+
+      <AdminConfirmDialog
+        open={!!confirmDelete}
+        onClose={() => setConfirmDelete(null)}
+        title="Delete team member"
+        message={<>Are you sure you want to permanently delete <strong>{confirmDelete?.name}</strong>? This cannot be undone.</>}
+        confirmLabel="Delete team member"
+        onConfirm={async () => {
+          if (!confirmDelete) return;
+          await api.team.remove(confirmDelete.id);
+          setConfirmDelete(null);
+          reload();
+        }}
+      />
 
       <Modal open={!!editing} onClose={() => setEditing(null)} title={editing?.name ? "Edit Team Member" : "Add Team Member"} wide>
         {editing && (
