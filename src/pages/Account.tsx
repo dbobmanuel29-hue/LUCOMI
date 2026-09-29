@@ -307,11 +307,11 @@ export default function Account() {
                 </div>
 
                 <div className="mt-6">
-                  {enquiries.loading && (
+                  {enquiriesLoading && (
                     <div className="rounded-xl border border-line bg-plate/50 p-5 text-sm text-mute">Loading your enquiries...</div>
                   )}
 
-                  {!enquiries.loading && enquiries.error && (
+                  {!enquiriesLoading && enquiriesError && (
                     <div className="rounded-xl border border-line bg-plate/50 p-5 text-sm text-mute">
                       We couldn't load your enquiries right now. Please refresh the page and try again.
                     </div>
